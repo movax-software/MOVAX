@@ -17,9 +17,10 @@ import javafx.geometry.Orientation;
 public class VentanaAnimacionEscanerSinFXML {
     
     private EscanerAnimado escanerAnimado;
-    private Button btnIniciar, btnPausar, btnDetener, btnSiguiente, btnAnterior;
+    private Button btnIniciar, btnPausar, btnDetener, btnSiguiente, btnAnterior, btnAumentarFont, btnDisminuirFont;
     private Slider sliderVelocidad;
     private Label lblVelocidad;
+    private int fontSize = 14;
     
     public static void mostrar(String codigoFuente, Stage ownerStage) {
         VentanaAnimacionEscanerSinFXML ventana = new VentanaAnimacionEscanerSinFXML();
@@ -39,9 +40,9 @@ public class VentanaAnimacionEscanerSinFXML {
         TextArea textAreaTokens = new TextArea();
         
         // Configurar estilos
-        textFlowCodigo.setStyle("-fx-background-color: #1e1e1e; -fx-padding: 10px; -fx-font-family: 'Consolas', 'Monaco', monospace; -fx-font-size: 14px;");
-        textAreaInfo.setStyle("-fx-control-inner-background: #2d2d2d; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: 13px;");
-        textAreaTokens.setStyle("-fx-control-inner-background: #2d2d2d; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: 12px;");
+        textFlowCodigo.setStyle("-fx-background-color: #161b22; -fx-padding: 10px; -fx-font-family: 'Consolas', 'Monaco', monospace; -fx-font-size: "+fontSize+"px;");
+        textAreaInfo.setStyle("-fx-control-inner-background: #161b22; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: "+fontSize+"px;");
+        textAreaTokens.setStyle("-fx-control-inner-background: #161b22; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: "+fontSize+"px;");
         
         textAreaInfo.setEditable(false);
         textAreaTokens.setEditable(false);
@@ -69,6 +70,8 @@ public class VentanaAnimacionEscanerSinFXML {
         btnDetener = crearBoton("⏹ Detener", "#F44336");
         btnAnterior = crearBoton("◀ Anterior", "#2196F3");
         btnSiguiente = crearBoton("Siguiente ▶", "#2196F3");
+        btnAumentarFont = crearBoton("A+", "gray");
+        btnDisminuirFont = crearBoton("A-", "gray");
         
         btnPausar.setDisable(true);
         btnDetener.setDisable(true);
@@ -87,6 +90,27 @@ public class VentanaAnimacionEscanerSinFXML {
             btnAnterior.setDisable(true);
             escanerAnimado.iniciar();
         });
+
+        btnAumentarFont.setOnAction(e -> {
+            this.fontSize += 2;
+            if (this.fontSize >= 24)
+                this.fontSize = 24;
+
+        textFlowCodigo.setStyle("-fx-background-color: #161b22; -fx-padding: 10px; -fx-font-family: 'Consolas', 'Monaco', monospace; -fx-font-size: "+this.fontSize+"px;");
+        textAreaInfo.setStyle("-fx-control-inner-background: #161b22; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: "+this.fontSize+"px;");
+        textAreaTokens.setStyle("-fx-control-inner-background: #161b22; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: "+this.fontSize+"px;");
+        });
+
+        btnDisminuirFont.setOnAction(e -> {
+            this.fontSize -= 2;
+            if (this.fontSize <= 14)
+                this.fontSize = 14;
+
+            textFlowCodigo.setStyle("-fx-background-color: #161b22; -fx-padding: 10px; -fx-font-family: 'Consolas', 'Monaco', monospace; -fx-font-size: "+this.fontSize+"px;");
+            textAreaInfo.setStyle("-fx-control-inner-background: #161b22; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: "+this.fontSize+"px;");
+            textAreaTokens.setStyle("-fx-control-inner-background: #161b22; -fx-text-fill: white; -fx-font-family: 'Consolas', monospace; -fx-font-size: "+this.fontSize+"px;");
+        }); 
+
         
         btnPausar.setOnAction(e -> {
             if (btnPausar.getText().equals("⏸ Pausar")) {
@@ -142,7 +166,7 @@ public class VentanaAnimacionEscanerSinFXML {
         // ====================================================================
         
         VBox topContainer = new VBox(10);
-        topContainer.setStyle("-fx-background-color: #252525; -fx-padding: 15px;");
+        topContainer.setStyle("-fx-background-color: #0d1117; -fx-padding: 15px;");
         
         Label titulo = new Label("Animación del Escáner - Análisis Léxico");
         titulo.setStyle("-fx-text-fill: white; -fx-font-size: 18px; -fx-font-weight: bold;");
@@ -158,7 +182,9 @@ public class VentanaAnimacionEscanerSinFXML {
             sep1,
             btnAnterior, btnSiguiente,
             sep2,
-            lblVelocidadTitulo, sliderVelocidad, lblVelocidad
+            lblVelocidadTitulo, sliderVelocidad, lblVelocidad,
+            btnAumentarFont, btnDisminuirFont
+
         );
         
         topContainer.getChildren().addAll(titulo, controles);
@@ -168,16 +194,16 @@ public class VentanaAnimacionEscanerSinFXML {
         // ====================================================================
         
         VBox vboxCodigo = new VBox(5);
-        vboxCodigo.setStyle("-fx-background-color: #1e1e1e;");
+        vboxCodigo.setStyle("-fx-background-color: #161b22;");
         
         Label lblCodigo = new Label("CÓDIGO FUENTE");
-        lblCodigo.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #2d2d2d;");
+        lblCodigo.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #0d1117;");
         lblCodigo.setMaxWidth(Double.MAX_VALUE);
         
         ScrollPane scrollCodigo = new ScrollPane(textFlowCodigo);
         scrollCodigo.setFitToWidth(true);
         scrollCodigo.setFitToHeight(true);
-        scrollCodigo.setStyle("-fx-background-color: #1e1e1e; -fx-background: #1e1e1e;");
+        scrollCodigo.setStyle("-fx-background-color: #161b22; -fx-background: #161b22;");
         
         vboxCodigo.getChildren().addAll(lblCodigo, scrollCodigo);
         VBox.setVgrow(scrollCodigo, Priority.ALWAYS);
@@ -188,10 +214,10 @@ public class VentanaAnimacionEscanerSinFXML {
         
         // Información del paso actual
         VBox vboxInfo = new VBox(5);
-        vboxInfo.setStyle("-fx-background-color: #1e1e1e;");
+        vboxInfo.setStyle("-fx-background-color: #161b22;");
         
         Label lblInfo = new Label("INFORMACIÓN DEL PASO ACTUAL");
-        lblInfo.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #2d2d2d;");
+        lblInfo.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #0d1117;");
         lblInfo.setMaxWidth(Double.MAX_VALUE);
         
         vboxInfo.getChildren().addAll(lblInfo, textAreaInfo);
@@ -199,10 +225,10 @@ public class VentanaAnimacionEscanerSinFXML {
         
         // Tokens identificados
         VBox vboxTokens = new VBox(5);
-        vboxTokens.setStyle("-fx-background-color: #1e1e1e;");
+        vboxTokens.setStyle("-fx-background-color: #161b22;");
         
         Label lblTokens = new Label("TOKENS IDENTIFICADOS");
-        lblTokens.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #2d2d2d;");
+        lblTokens.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #0d1117;");
         lblTokens.setMaxWidth(Double.MAX_VALUE);
         
         vboxTokens.getChildren().addAll(lblTokens, textAreaTokens);
@@ -218,15 +244,15 @@ public class VentanaAnimacionEscanerSinFXML {
         // ====================================================================
         
         VBox vboxAutomata = new VBox(5);
-        vboxAutomata.setStyle("-fx-background-color: #1e1e1e;");
+        vboxAutomata.setStyle("-fx-background-color: #161b22;");
         
         Label lblAutomata = new Label("AUTÓMATA FINITO");
-        lblAutomata.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #2d2d2d;");
+        lblAutomata.setStyle("-fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 10px; -fx-background-color: #0d1117;");
         lblAutomata.setMaxWidth(Double.MAX_VALUE);
         
         // SOLUCIÓN: Envolver el canvas en un StackPane con tamaño máximo definido
         StackPane canvasContainer = new StackPane(canvasAutomata);
-        canvasContainer.setStyle("-fx-background-color: #1e1e1e;");
+        canvasContainer.setStyle("-fx-background-color: #161b22;");
         canvasContainer.setMaxHeight(Double.MAX_VALUE);
         
         // Ajustar canvas al tamaño del contenedor SIN causar recursión
@@ -285,7 +311,7 @@ public class VentanaAnimacionEscanerSinFXML {
         // ====================================================================
         
         BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: #1e1e1e;");
+        root.setStyle("-fx-background-color: #161b22;");
         root.setTop(topContainer);
         root.setCenter(splitPrincipal);
         root.setBottom(leyenda);

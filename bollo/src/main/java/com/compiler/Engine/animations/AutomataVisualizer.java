@@ -108,7 +108,7 @@ public class AutomataVisualizer {
         }
         
         // Limpiar canvas
-        gc.setFill(Color.web("#1e1e1e"));
+        gc.setFill(Color.web("#161b22"));
         gc.fillRect(0, 0, width, height);
         
         // Título
@@ -235,12 +235,16 @@ public class AutomataVisualizer {
         dibujarFlecha(startX + 35, y, startX + spacing - 35, y, "0-9");
         
         dibujarEstado(startX + spacing, y, "q1", false, false);
+        dibujarFlechaLoop(startX + spacing, y-50, "0-9");
+
         dibujarFlecha(startX + spacing + 35, y, startX + spacing * 2 - 35, y, ".");
         
         dibujarEstado(startX + spacing * 2, y, "q2", false, false);
         dibujarFlecha(startX + spacing * 2 + 35, y, startX + spacing * 3 - 35, y, "0-9");
         
         dibujarEstado(startX + spacing * 3, y, "q3", true, true);
+        dibujarFlechaLoop(startX + spacing * 3, y-50, "0-9");
+
         
         gc.setFill(Color.YELLOW);
         gc.setFont(Font.font("Arial", FontWeight.BOLD, 14));
@@ -341,14 +345,13 @@ public class AutomataVisualizer {
         gc.fillOval(cx - 40, cy - 40, 80, 80);  // Aumentado de 80x80 a 100x100
         
         gc.setStroke(Color.LIGHTGREEN);
-        gc.setLineWidth(5);  // Aumentado de 4 a 5
+        gc.setLineWidth(4);  // Aumentado de 4 a 5
         gc.strokeOval(cx - 50, cy - 50, 100, 100);
-        gc.strokeOval(cx - 55, cy - 55, 110, 110);
         
         gc.setFill(Color.WHITE);
         gc.setFont(Font.font("Arial", FontWeight.BOLD, 24));  //  Aumentado de 24 a 36
         gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText("✓", cx, cy + 15);
+        gc.fillText("✓", cx, cy + 10);
         
         gc.setFont(Font.font("Arial", FontWeight.BOLD, 14));  // Aumentado de 14 a 18
         gc.fillText("TOKEN ACEPTADO", cx, cy + 70);
@@ -388,7 +391,7 @@ public class AutomataVisualizer {
             gc.setFill(Color.web("#2196F3"));
             gc.setStroke(Color.CYAN);
         } else {
-            gc.setFill(Color.web("#424242"));
+            gc.setFill(Color.web("#161b22"));
             gc.setStroke(Color.GRAY);
         }
         
@@ -459,7 +462,7 @@ public class AutomataVisualizer {
         double boxHeight = 70;
         double boxY = height - boxHeight - 10;
         
-        gc.setFill(Color.web("#2d2d2d"));
+        gc.setFill(Color.web("#161b22"));
         gc.fillRect(10, boxY, width - 20, boxHeight);
         
         gc.setStroke(Color.web("#4CAF50"));
