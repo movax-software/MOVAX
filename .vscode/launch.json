@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "pruebas",
+            "request": "launch",
+            "mainClass": "com.compiler.pruebas",
+            "projectName": "bollo"
+        },
+        {
+            "type": "java",
             "name": "prueba",
             "request": "launch",
             "mainClass": "com.compiler.UI.controlador.prueba",
