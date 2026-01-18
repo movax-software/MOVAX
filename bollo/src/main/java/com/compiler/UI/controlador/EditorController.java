@@ -18,6 +18,7 @@ import org.fxmisc.richtext.LineNumberFactory;
 
 import com.compiler.Engine.ast.ParseTreeToASTConverter;
 import com.compiler.Engine.ast.ProgramaNode;
+import com.compiler.Engine.compiler.escaner.Escaner;
 import com.compiler.Engine.ast.ParseTreeToASTConverterDebug;
 import com.compiler.Engine.semantic.*;
 

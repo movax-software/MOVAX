@@ -1,5 +1,6 @@
 package com.compiler.Engine;
 import com.compiler.Engine.ast.*;
+import com.compiler.Engine.compiler.escaner.Escaner;
 
 import java.util.ArrayList;
 
@@ -10,11 +11,11 @@ public class Parser {
     private final int IF = 0, PRINT = 1, INPUTINT = 2, INPUTFLOAT = 3, INPUTSTRING = 4, ELSE = 5, TIPO_DATO_INT = 6, 
         TIPO_DATO_FLOAT = 7, TIPO_DATO_STRING = 8, ID = 9, FLOAT = 10, NUM = 11, COMP = 12, ASIG = 13, OPER = 14, 
         PAROPEN = 16, PARCLOSE = 17, LLAVEOPEN = 18, LLAVECLOSE = 19, EOL = 20, CADENA = 21, FOR = 22,
-        INC = 23, DEC = 24, MAIN = 25;
+        INC = 23, DEC = 24, MAIN = 25, DIR = 26;
 
     private final String[] Words = {"if", "print", "inputInt", "inputFloat", "inputString", "else", "\"TIPO_INT\"", 
     "\"TIPO_FLOAT\"", "\"TIPO_STRING\"", "ID", "FLOAT", "NUM", "COMPARADOR", "=", "OPERADOR", "\"$$\"", "(", 
-    ")", "{", "}", ";", "CADENA", "for", "++", "--", "main"};
+    ")", "{", "}", ";", "CADENA", "for", "++", "--", "main", "#"};
     
     private int i = 0;
     private int Tok;
@@ -35,6 +36,12 @@ public class Parser {
         
         // Crear nodo raíz del árbol
         arbolSintactico = new NodoParseTree("PROGRAMA");
+
+        if (Tok == DIR) {
+             NodoParseTree nodoX = eat(DIR);
+            System.out.println(nodoX.toString());
+        }
+       
         
         // Verificar main
         NodoParseTree nodoMain = eat(MAIN);
@@ -92,7 +99,7 @@ public class Parser {
     }    
     
     public NodoParseTree getArbolSintactico() {
-        return arbolSintactico;
+        return this.arbolSintactico;
     }
        
     public NodoParseTree DECLARACION() {

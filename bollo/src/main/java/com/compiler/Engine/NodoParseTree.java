@@ -4,7 +4,6 @@ import java.util.*;
 
 /**
  * Representa un nodo en el Parse Tree
- * Compatible con el convertidor ParseTreeToASTConverter
  */
 public class NodoParseTree {
     private String tipo;
@@ -144,64 +143,5 @@ public class NodoParseTree {
         return sb.toString();
     }
     
-    /**
-     * Obtiene la cantidad de nodos en el árbol (incluyendo este nodo)
-     * @return Cantidad total de nodos
-     */
-    public int contarNodos() {
-        int count = 1; // Este nodo
-        for (NodoParseTree hijo : hijos) {
-            count += hijo.contarNodos();
-        }
-        return count;
-    }
     
-    /**
-     * Obtiene la altura del árbol
-     * @return Altura del árbol (0 si es hoja)
-     */
-    public int obtenerAltura() {
-        if (hijos.isEmpty()) {
-            return 0;
-        }
-        int maxAltura = 0;
-        for (NodoParseTree hijo : hijos) {
-            maxAltura = Math.max(maxAltura, hijo.obtenerAltura());
-        }
-        return maxAltura + 1;
-    }
-    
-    /**
-     * Busca un nodo por tipo
-     * @param tipoBuscado El tipo a buscar
-     * @return El primer nodo encontrado con ese tipo, o null si no existe
-     */
-    public NodoParseTree buscarPorTipo(String tipoBuscado) {
-        if (this.tipo.equals(tipoBuscado)) {
-            return this;
-        }
-        for (NodoParseTree hijo : hijos) {
-            NodoParseTree resultado = hijo.buscarPorTipo(tipoBuscado);
-            if (resultado != null) {
-                return resultado;
-            }
-        }
-        return null;
-    }
-    
-    /**
-     * Busca todos los nodos con un tipo específico
-     * @param tipoBuscado El tipo a buscar
-     * @return Lista de nodos encontrados
-     */
-    public List<NodoParseTree> buscarTodosPorTipo(String tipoBuscado) {
-        List<NodoParseTree> resultados = new ArrayList<>();
-        if (this.tipo.equals(tipoBuscado)) {
-            resultados.add(this);
-        }
-        for (NodoParseTree hijo : hijos) {
-            resultados.addAll(hijo.buscarTodosPorTipo(tipoBuscado));
-        }
-        return resultados;
-    }
 }
