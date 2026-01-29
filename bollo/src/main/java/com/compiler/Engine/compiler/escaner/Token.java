@@ -2,7 +2,7 @@ package com.compiler.Engine.compiler.escaner;
 
 public class Token {
     private TokenType tokenType;
-    private String lexema;
+    private String lexema = "";
     
     public Token(TokenType tokenType, String lexema) {
         this.tokenType = tokenType;

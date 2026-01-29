@@ -1,7 +1,7 @@
 package com.compiler.Engine.ast;
-import com.compiler.Engine.NodoParseTree;
-
 import java.util.*;
+
+import com.compiler.Engine.compiler.parser.NodoParseTree;
 
 public class ParseTreeToASTConverterDebug {
     

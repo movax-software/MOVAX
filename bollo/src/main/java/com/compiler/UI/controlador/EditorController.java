@@ -19,6 +19,8 @@ import org.fxmisc.richtext.LineNumberFactory;
 import com.compiler.Engine.ast.ParseTreeToASTConverter;
 import com.compiler.Engine.ast.ProgramaNode;
 import com.compiler.Engine.compiler.escaner.Escaner;
+import com.compiler.Engine.compiler.parser.NodoParseTree;
+import com.compiler.Engine.compiler.parser.Parser;
 import com.compiler.Engine.ast.ParseTreeToASTConverterDebug;
 import com.compiler.Engine.semantic.*;
 
@@ -27,7 +29,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Comparator;
 import com.compiler.Engine.*;
-import com.compiler.Engine.animations.VentanaAnimacionEscaner;
 import com.compiler.Engine.animations.VentanaAnimacionEscanerSinFXML;
 
 public class EditorController {
@@ -260,9 +261,6 @@ public class EditorController {
         actualizarEstiloResultado(codeAreaCodigoGenerado);
     }
 
-    /**
-     * Actualiza el estilo de un CodeArea de resultado manteniendo su color de fondo
-     */
     private void actualizarEstiloResultado(CodeArea ca) {
         if (ca == null) return;
         
@@ -320,7 +318,7 @@ public class EditorController {
         );
         
         escaner.Scan();
-        escaner.WriteRun(codeAreaLexico);
+        escaner.writeScan();
         
         if (escaner.gethasError()) {
             codeAreaLexico.setStyle(

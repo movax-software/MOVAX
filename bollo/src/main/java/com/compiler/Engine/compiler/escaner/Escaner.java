@@ -1,12 +1,8 @@
 package com.compiler.Engine.compiler.escaner;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.fxmisc.richtext.CodeArea;
 
 public class Escaner {
    
@@ -46,41 +42,6 @@ public class Escaner {
         Map.entry("_Packed", TokenType.PACKED)
     );
 
-    private final Map<String, TokenType> OperadoresUnarios = Map.ofEntries(
-        Map.entry("{", TokenType.LBRACE), 
-        Map.entry("}", TokenType.RBRACE), 
-        Map.entry("[", TokenType.LBRACKET), 
-        Map.entry("]", TokenType.RBRACKET), 
-        Map.entry("(", TokenType.LPAREN), 
-        Map.entry(")", TokenType.RPAREN), 
-        Map.entry(";", TokenType.SEMICOLON), 
-        Map.entry("#", TokenType.HASH), 
-        Map.entry("\\", TokenType.BACKSLASH), 
-        Map.entry("'", TokenType.APOSTROPHE)
-    );
-
-    private final Map<String, TokenType> OperadoresBinarios = Map.ofEntries(
-        Map.entry("*", TokenType.MUL),
-        Map.entry("/", TokenType.DIV),
-        Map.entry("%", TokenType.MOD),
-        Map.entry("+", TokenType.PLUS),
-        Map.entry("-", TokenType.MINUS),
-        Map.entry("=", TokenType.ASSIGN),
-        Map.entry("<<", TokenType.SHL),
-        Map.entry(">>", TokenType.SHR),
-        Map.entry("<", TokenType.LT),
-        Map.entry(">", TokenType.GT),
-        Map.entry("<=", TokenType.LE),
-        Map.entry(">=", TokenType.GE),
-        Map.entry("==", TokenType.EQ),
-        Map.entry("!=", TokenType.NE),
-        Map.entry("&", TokenType.AND),
-        Map.entry("|", TokenType.OR),
-        Map.entry("^", TokenType.XOR),
-        Map.entry("&&", TokenType.LAND),
-        Map.entry("||", TokenType.LOR),
-        Map.entry(",", TokenType.COMMA)
-    );
 
     private int lineaActual = 1;
     private boolean hasError = false;    
@@ -286,204 +247,207 @@ public class Escaner {
                 }
                 continue;
             }
-            
             if (c == '+') {
                 Token.setLength(0);
                 Token.append(c);
                 i++;
+
                 if (i < chars.length && chars[i] == '+') {
                     Token.append('+');
-                    Tokens.add(new Token(TokenType.INC, Token.toString()));
+                    Tokens.add(new Token(TokenType.INC, Token.toString()));   // ++
                     i++;
-                } else {
-                    Tokens.add(new Token(TokenType.PLUS, Token.toString()));
+                } 
+                else if (i < chars.length && chars[i] == '=') {
+                    Token.append('=');
+                    Tokens.add(new Token(TokenType.PLUS_ASSIGN, Token.toString())); // +=
+                    i++;
+                } 
+                else {
+                    Tokens.add(new Token(TokenType.PLUS, Token.toString())); // +
                 }
-                continue;
-            }
-            
-            if (c == '-' && i + 1 < chars.length && chars[i+1] == '-') {
-                tokens.add(24); 
-                lexemas.add("--"); 
-                i+=2;
-                Scanned.append(DEC + "\n");
-                continue;
-            }            
-            
-            if (c == '+' || c == '-' || c == '*' || c == '/') {
-                tokens.add(14);
-                lexemas.add(String.valueOf(c)); 
-                Scanned.append(c + "\n");
-                i++;
+
                 continue;
             }
 
-            if (c == '$' && i + 1 < chars.length && chars[i + 1] == '$') {
-                tokens.add(15);
-                lexemas.add("$$"); 
-                Scanned.append("$$\n");
-                i += 2;
+            if (c == '-') {
+                Token.setLength(0);
+                Token.append(c);
+                i++;
+                if (i < chars.length && chars[i] == '-') {
+                    Token.append('-');
+                    Tokens.add(new Token(TokenType.DEC, Token.toString()));
+                    i++;
+                } 
+                else if (i < chars.length && chars[i] == '=') {
+                    Token.append('=');
+                    Tokens.add(new Token(TokenType.MINUS_ASSIGN, Token.toString()));
+                    i++;
+                } 
+                else {
+                    Tokens.add(new Token(TokenType.MINUS, Token.toString()));
+                }
+                continue;
+            }  
+
+            if (c == '*') {
+                Token.setLength(0);
+                Token.append(c);
+                i++;
+
+                if (i < chars.length && chars[i] == '=') {
+                    Token.append('=');
+                    Tokens.add(new Token(TokenType.MUL_ASSIGN, Token.toString()));
+                    i++;
+                }
+                else if (i < chars.length && chars[i] == '/') {
+                    Token.append('/');
+                    Tokens.add(new Token(TokenType.RBLOCK_COMMENT, Token.toString()));
+                    i++;
+                }
+                else {
+                    Tokens.add(new Token(TokenType.MUL, Token.toString()));
+                }
+
+
                 continue;
             }
+
+            if (c == '/') {
+                Token.setLength(0);
+                Token.append(c);
+                i++;
+
+                if (i < chars.length && chars[i] == '=') {
+                    Token.append('=');
+                    Tokens.add(new Token(TokenType.DIV_ASSIGN, Token.toString())); // /=
+                    i++;
+                } 
+                else if (i < chars.length && chars[i] == '/') {
+                    Token.append('/');
+                    Tokens.add(new Token(TokenType.LINE_COMMENT, Token.toString())); // //
+                    i++;
+                }
+                else if (i < chars.length && chars[i] == '*') {
+                    Token.append('*');
+                    Tokens.add(new Token(TokenType.LBLOCK_COMMENT, Token.toString())); // /*
+                    i++;
+                }
+                else {
+                    Tokens.add(new Token(TokenType.DIV, Token.toString())); // /
+                }
+
+                continue;
+            }
+
+            if (c == '%') {
+                Token.setLength(0);
+                Token.append(c);
+                i++;
+
+                if (i < chars.length && chars[i] == '=') {
+                    Token.append('=');
+                    Tokens.add(new Token(TokenType.MOD_ASSIGN, Token.toString())); // %=
+                    i++;
+                } 
+                else {
+                    Tokens.add(new Token(TokenType.MOD, Token.toString())); // %
+                }
+
+                continue;
+            }
+
     
             if (c == '(') {
-                tokens.add(16);
-                lexemas.add("("); 
-                Scanned.append(c + "\n");
+                Tokens.add(new Token(TokenType.LPAREN, "("));
                 i++;
                 continue;
             }
             
             if (c == ')') {
-                tokens.add(17);
-                lexemas.add(")"); 
-                Scanned.append(c + "\n");
+                Tokens.add(new Token(TokenType.RPAREN, ")"));
                 i++;
                 continue;
             }
     
             if (c == '{') {
-                tokens.add(18);
-                lexemas.add("{"); 
-                Scanned.append(c + "\n");
+                Tokens.add(new Token(TokenType.LBRACE, "{"));
                 i++;
                 continue;
             }
             
             if (c == '}') {
-                tokens.add(19);
-                lexemas.add("}"); 
-                Scanned.append(c + "\n");
+                Tokens.add(new Token(TokenType.RBRACE, "}"));
                 i++;
                 continue;
             }
             
+            if (c == '[') {
+                Tokens.add(new Token(TokenType.LBRACKET, "["));
+                i++;
+                continue;
+            }
+            
+            if (c == ']') {
+                Tokens.add(new Token(TokenType.RBRACKET, "]"));
+                i++;
+                continue;
+            }
             if (c == ';') {
-                tokens.add(20);
-                lexemas.add(";"); 
-                Scanned.append(";\n");
+                Tokens.add(new Token(TokenType.SEMICOLON, ";"));
                 i++;
                 continue;
             }
     
             if (c == '"') {
                 Token.setLength(0);
-                Token.append(c);
-                i++;
+                i++; // saltar comilla inicial
+
                 while (i < chars.length && chars[i] != '"') {
-                    Token.append(chars[i]);
+                    if (chars[i] == '\\' && i + 1 < chars.length) {
+                        Token.append(chars[i]);     // \
+                        i++;
+                        Token.append(chars[i]);     // carácter escapado
+                    } else {
+                        Token.append(chars[i]);
+                    }
                     i++;
                 }
+
                 if (i < chars.length && chars[i] == '"') {
-                    Token.append(chars[i]);
-                    String cadena = Token.toString();
-                    tokens.add(21);
-                    lexemas.add(cadena); 
-                    Scanned.append(cadena + "\n");
-                    i++;
+                    i++; // cerrar comilla
+                    Tokens.add(new Token(TokenType.STRING, Token.toString()));
+                    Scanned.append("\"" + Token + "\"\n");
+                } else {
+                    Scanned.append("ERROR: Cadena no cerrada\n");
                 }
+
                 continue;
             }
 
+
             if (c == '#') {
-                tokens.add(25);
-                lexemas.add("#");
-                Scanned.append(c + "\n");
+                Tokens.add(new Token(TokenType.HASH, "#"));
                 i++;
                 continue;
             }
             
             // Token inválido
-            this.hasError = true;
-            tokens.add(-1);
-            lexemas.add(String.valueOf(c)); // NUEVO: Guardar el carácter inválido
-            Scanned.append("ERROR: Token inválido ('" + c + "') en línea " + this.lineaActual + "\n");
-            i++;
-            
-            return Scanned.toString();
-
+            Tokens.add(new Token(TokenType.UNKNOWN, String.valueOf(c)));
+            hasError = true;
+            break;
         }
     }
     
-    public void WriteRun(CodeArea codeAreaLexico) {
-        String scannedResult = this.Scan();
-        formatLexerOutput(scannedResult);
-        codeAreaLexico.replaceText(this.TokensString);
-    }
+    public void writeScan() {
+        for (Token token : this.Tokens) {
+            System.out.println(token.getTokenType().name() + " | " + token.getLexema());
+        }
 
-    private void formatLexerOutput(String scanned) {
-        String[] lines = scanned.split("\n");
-        StringBuilder formattedTokens = new StringBuilder();
         
-        // Mapa para almacenar errores únicos: clave = "carácter_línea"
-        Map<String, String> uniqueErrors = new LinkedHashMap<>();
-        int tokenCount = 0;
-
-        for (String line : lines) {
-            if (line.startsWith("ERROR:")) {
-                // Extraer el carácter inválido y número de línea
-                Pattern pattern = Pattern.compile("Token inválido \\('(.)'\\) en línea (\\d+)");
-                Matcher matcher = pattern.matcher(line);
-                
-                if (matcher.find()) {
-                    String invalidChar = matcher.group(1);
-                    String lineNumber = matcher.group(2);
-                    
-                    // Crear clave única: carácter + línea
-                    String key = invalidChar + "_" + lineNumber;
-                    
-                    // Solo agregar si no existe (evita duplicados)
-                    if (!uniqueErrors.containsKey(key)) {
-                        uniqueErrors.put(key, String.format("Token inválido '%s' en línea %s", 
-                            invalidChar, lineNumber));
-                    }
-                }
-            } else if (!line.trim().isEmpty()) {
-                // Línea válida (token reconocido)
-                formattedTokens.append("TOKEN: ").append(line).append("\n");
-                tokenCount++;
-            }
-        }
-
-        // Decidir el contenido final de TokensString
-        if (!uniqueErrors.isEmpty()) {
-            StringBuilder errorOutput = new StringBuilder();
-            errorOutput.append(String.format(
-                "ERRORES LÉXICOS ENCONTRADOS: %d\n" +
-                "═══════════════════════════════════\n\n",
-                uniqueErrors.size()
-            ));
-            
-            // Mostrar errores únicos
-            for (String errorMsg : uniqueErrors.values()) {
-                errorOutput.append("  • ").append(errorMsg).append("\n");
-            }
-            
-            errorOutput.append(String.format(
-                "\n═══════════════════════════════════\n" +
-                "✓ Tokens válidos: %d\n" +
-                "✗ Errores únicos: %d",
-                tokenCount, uniqueErrors.size()
-            ));
-            
-            this.TokensString = errorOutput.toString();
-        } else {
-            this.TokensString = String.format(
-                "✓ ANÁLISIS LÉXICO COMPLETADO\n" +
-                "═══════════════════════════════════\n" +
-                "Total de tokens: %d\n\n%s",
-                tokenCount, formattedTokens.toString()
-            );
-        }
+        //formatLexerOutput(scannedResult);
+        //codeAreaLexico.replaceText(this.TokensString);
     }
 
-    public String getTokensString() {
-        return TokensString;
-    }
-
-    public void setTokensString(String tokensString) {
-        TokensString = tokensString;
-    }
-    
     public boolean gethasError() {
         return this.hasError;
     }
@@ -492,11 +456,4 @@ public class Escaner {
         this.hasError = error;
     }
     
-    public ArrayList<Integer> getTokens() {
-        return tokens;
-    }
-    
-    public ArrayList<String> getLexemas() {
-        return lexemas;
-    }
 }

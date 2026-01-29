@@ -1,6 +1,8 @@
-package com.compiler.Engine;
+package com.compiler.Engine.compiler.parser;
 import com.compiler.Engine.ast.*;
 import com.compiler.Engine.compiler.escaner.Escaner;
+import com.compiler.Engine.compiler.escaner.Token;
+import com.compiler.Engine.compiler.escaner.TokenType;
 
 import java.util.ArrayList;
 
@@ -8,43 +10,31 @@ import org.fxmisc.richtext.CodeArea;
 
 public class Parser {
 
-    private final int IF = 0, PRINT = 1, INPUTINT = 2, INPUTFLOAT = 3, INPUTSTRING = 4, ELSE = 5, TIPO_DATO_INT = 6, 
-        TIPO_DATO_FLOAT = 7, TIPO_DATO_STRING = 8, ID = 9, FLOAT = 10, NUM = 11, COMP = 12, ASIG = 13, OPER = 14, 
-        PAROPEN = 16, PARCLOSE = 17, LLAVEOPEN = 18, LLAVECLOSE = 19, EOL = 20, CADENA = 21, FOR = 22,
-        INC = 23, DEC = 24, MAIN = 25, DIR = 26;
-
-    private final String[] Words = {"if", "print", "inputInt", "inputFloat", "inputString", "else", "\"TIPO_INT\"", 
-    "\"TIPO_FLOAT\"", "\"TIPO_STRING\"", "ID", "FLOAT", "NUM", "COMPARADOR", "=", "OPERADOR", "\"$$\"", "(", 
-    ")", "{", "}", ";", "CADENA", "for", "++", "--", "main", "#"};
-    
-    private int i = 0;
-    private int Tok;
+    private ArrayList<Token> tokens = new ArrayList<>();
     private boolean ParserError = false;
-    private ArrayList<String> Calculos = new ArrayList<>();
-    private final Escaner Escaneado;
     private int lineaActual = 1;
-
-    // Árbol sintáctico
+    private TokenType Tok;
+    private static int iterator = 0;
     private NodoParseTree arbolSintactico;
 
-    public Parser(Escaner escaneado, CodeArea codeAreaParser) {
-        Escaneado = escaneado;
+    public Parser(ArrayList<Token> tokens, CodeArea codeAreaParser) {
+        this.tokens = tokens;
     }
 
-    public boolean P() {
-        this.Tok = (int) Escaneado.tokens.get(i);
-        
-        // Crear nodo raíz del árbol
-        arbolSintactico = new NodoParseTree("PROGRAMA");
+    private NodoParseTree P() {
 
-        if (Tok == DIR) {
-             NodoParseTree nodoX = eat(DIR);
-            System.out.println(nodoX.toString());
-        }
-       
+        // Crear nodo raíz del árbol
+        NodoParseTree nodoPadre = new NodoParseTree("PROGRAMA");        
+
+        // agarrar el primer token del escaneado
+        this.Tok = this.tokens.get(iterator).getTokenType();
+
+        // Manejo opcional de HASH #include
+        if (this.Tok == TokenType.HASH) 
+            nodoPadre.agregarHijo(IMPORT());
         
         // Verificar main
-        NodoParseTree nodoMain = eat(MAIN);
+        NodoParseTree nodoMain = eat(TokenType.);
         if (nodoMain == null) {
             Error();
             System.out.println("Error: Se esperaba 'main' al inicio del programa");
@@ -97,12 +87,43 @@ public class Parser {
         
         return !this.ParserError;
     }    
+
+    private NodoParseTree IMPORT() {
+        // Si no empieza con #, no hay imports que procesar
+        if (this.Tok != TokenType.HASH) 
+            return null;
+
+        // Creamos un nodo contenedor para los imports
+        NodoParseTree listaImports = new NodoParseTree("IMPORTS");
+
+        // Mientras el token actual sea #, seguimos extrayendo imports
+        while (this.Tok == TokenType.HASH && !this.ParserError) {
+            NodoParseTree nodoHijo = new NodoParseTree("IMPORT");
+            
+            nodoHijo.agregarHijo(eat(TokenType.HASH));
+            nodoHijo.agregarHijo(eat(TokenType.INCLUDE));
+            nodoHijo.agregarHijo(eat(TokenType.LT));
+            nodoHijo.agregarHijo(eat(TokenType.IDENTIFIER));
+            nodoHijo.agregarHijo(eat(TokenType.GT));
+            
+            listaImports.agregarHijo(nodoHijo);
+            
+            // Actualizar el token actual para la siguiente vuelta del while
+            if (iterator < tokens.size()) {
+                this.Tok = tokens.get(iterator).getTokenType();
+            } else {
+                break;
+            }
+        }
+
+        return listaImports;
+    }
     
     public NodoParseTree getArbolSintactico() {
         return this.arbolSintactico;
     }
        
-    public NodoParseTree DECLARACION() {
+    private NodoParseTree DECLARACION() {
         if (this.ParserError) return null;
 
         NodoParseTree nodo = new NodoParseTree("DECLARACION");
@@ -201,7 +222,7 @@ public class Parser {
         return nodo;
     }
 
-    public NodoParseTree ESTATUTO() {
+    private NodoParseTree ESTATUTO() {
         if(this.ParserError) return null;
 
         NodoParseTree nodo = new NodoParseTree("ESTATUTO");
@@ -444,42 +465,43 @@ public class Parser {
         return nodo;
     }
 
-    public NodoParseTree eat(int tok) {
+    public NodoParseTree eat(TokenType tok) {
         if (this.ParserError) return null;
     
-        if (i >= Escaneado.tokens.size() || i < 0) {
+        if (iterator >= this.tokens.size() || iterator < 0) 
             return null;
-        }
-        if (this.Tok == tok) {
+        
+        if (this.Tok.equals(tok)) {
             String lexema = "";
-            if (i < Escaneado.lexemas.size()) {
-                lexema = Escaneado.lexemas.get(i);
-            }
-            System.out.println("Token reconocido: " + this.Tok + " " + Words[this.Tok]);
+            if (iterator < tokens.size()) 
+                lexema = tokens.get(iterator).getLexema();
+            
+            System.out.println("Token reconocido: " + this.Tok.getLexema() + " " + this.Tok.getTokenType().name());
             
             // Crear nodo con tipo, valor y lexema
-            NodoParseTree nodo = new NodoParseTree(Words[this.Tok], Words[this.Tok], lexema, lineaActual);
+            NodoParseTree nodo = new NodoParseTree(this.Tok.getTokenType().name(), null, lexema, lineaActual);
             
             Avanzar();
             return nodo;
         } else {
-            Error();
+            Error(tok);
             return null;
         }
     }
 
     private void Avanzar() {
-        i++;    
-        if (i < Escaneado.tokens.size()) {
-            this.Tok = (int) Escaneado.tokens.get(i);
-        } else {
+        iterator++;    
+
+        if (iterator < tokens.size()) 
+            this.Tok = tokens.get(iterator);
+        else 
             System.out.println("Sin errores de Parser");
-        }
     }
     
-    private void Error() {
+    private void Error(Token tok) {
         this.setParserError(true);        
-        System.out.println("Token inesperado: " + this.Tok + " " + Words[this.Tok]);
+        System.out.println("Token inesperado: " + this.Tok.getTokenType().name() + " " + this.Tok.getLexema() + " en la línea " + this.lineaActual);
+        System.out.println("Se esperaba " + tok.getTokenType().name() + " " + tok.getLexema());
     }
 
     public boolean isParserError() {

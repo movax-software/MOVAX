@@ -2,7 +2,7 @@ package com.compiler.Engine.ast;
 
 import java.util.*;
 
-import com.compiler.Engine.NodoParseTree;
+import com.compiler.Engine.compiler.parser.NodoParseTree;
 
 // ============================================================================
 // CONVERTIDOR: PARSE TREE → AST

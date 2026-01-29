@@ -1,10 +1,7 @@
-package com.compiler.Engine;
+package com.compiler.Engine.compiler.parser;
 
 import java.util.*;
 
-/**
- * Representa un nodo en el Parse Tree
- */
 public class NodoParseTree {
     private String tipo;
     private String valor;
@@ -79,20 +76,10 @@ public class NodoParseTree {
         this.linea = linea;
     }
     
-    /**
-     * Imprime el árbol en formato visual
-     * @return String con la representación del árbol
-     */
     public String imprimirArbol() {
         return imprimirArbol("", true);
     }
     
-    /**
-     * Método recursivo para imprimir el árbol
-     * @param prefijo Prefijo para la indentación
-     * @param esUltimo Indica si es el último hijo
-     * @return String con la representación del subárbol
-     */
     private String imprimirArbol(String prefijo, boolean esUltimo) {
         StringBuilder sb = new StringBuilder();
         
@@ -122,10 +109,6 @@ public class NodoParseTree {
         return sb.toString();
     }
     
-    /**
-     * Representación en String del nodo
-     * @return String con información básica del nodo
-     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
