@@ -1,6 +1,7 @@
 package com.compiler.Engine.compiler.escaner;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -46,7 +47,7 @@ public class Escaner {
     private int lineaActual = 1;
     private boolean hasError = false;    
     private String CodigoFuente;
-    private ArrayList<Token> Tokens = new ArrayList<>();
+    private List<Token> Tokens = new LinkedList<>();
 
     public Escaner(String codigoFuente) {
         this.CodigoFuente = codigoFuente;

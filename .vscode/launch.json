@@ -3,6 +3,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Compilador",
+            "request": "launch",
+            "mainClass": "compilador.Compilador",
+            "projectName": "COMPILADOR"
+        },
+        {
+            "type": "java",
             "name": "pruebas",
             "request": "launch",
             "mainClass": "com.compiler.pruebas",
