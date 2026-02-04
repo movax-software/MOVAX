@@ -7,7 +7,7 @@ public class NodoParseTree {
     private String valor;
     private String lexema;
     private int linea;
-    private List<NodoParseTree> hijos;
+    private LinkedList<NodoParseTree> hijos;
     
     // Constructor simple - solo tipo
     public NodoParseTree(String tipo) {
@@ -15,7 +15,7 @@ public class NodoParseTree {
         this.valor = "";
         this.lexema = "";
         this.linea = 1;
-        this.hijos = new ArrayList<>();
+        this.hijos = new LinkedList<>();
     }
     
     // Constructor completo - tipo, valor, lexema, línea
@@ -24,13 +24,15 @@ public class NodoParseTree {
         this.valor = valor != null ? valor : "";
         this.lexema = lexema != null ? lexema : "";
         this.linea = linea;
-        this.hijos = new ArrayList<>();
+        this.hijos = new LinkedList<>();
     }
     
     // Agregar un hijo al nodo
+
     public void agregarHijo(NodoParseTree hijo) {
         if (hijo != null) {
             this.hijos.add(hijo);
+            // VISTA.dibujarNodo(this, hijo);
         }
     }
     

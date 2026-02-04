@@ -398,32 +398,41 @@ public class Escaner {
                 i++;
                 continue;
             }
-    
+
             if (c == '"') {
+
                 Token.setLength(0);
-                i++; // saltar comilla inicial
+                i++; // saltar "
 
                 while (i < chars.length && chars[i] != '"') {
-                    if (chars[i] == '\\' && i + 1 < chars.length) {
-                        Token.append(chars[i]);     // \
-                        i++;
-                        Token.append(chars[i]);     // carácter escapado
+
+                    if (chars[i] == '\\') {
+
+                        if (i + 1 >= chars.length) {
+                            error("Escape incompleto");
+                            break;
+                        }
+
+                        char escapado = traducirEscape(chars[i + 1]);
+                        Token.append(escapado);
+                        i += 2;
+
                     } else {
                         Token.append(chars[i]);
+                        i++;
                     }
-                    i++;
                 }
 
                 if (i < chars.length && chars[i] == '"') {
-                    i++; // cerrar comilla
+                    i++; // cerrar "
                     Tokens.add(new Token(TokenType.STRING, Token.toString()));
-                    Scanned.append("\"" + Token + "\"\n");
                 } else {
-                    Scanned.append("ERROR: Cadena no cerrada\n");
+                    error("Cadena no cerrada");
                 }
 
-                continue;
+            continue;
             }
+
 
 
             if (c == '#') {
@@ -438,7 +447,26 @@ public class Escaner {
             break;
         }
     }
-    
+        
+    private char traducirEscape(char c) {
+        switch (c) {
+            case 'n':  return '\n';
+            case 't':  return '\t';
+            case 'r':  return '\r';
+            case '0':  return '\0';
+            case '"':  return '"';
+            case '\\': return '\\';
+            default:
+                error("Escape inválido: \\" + c);
+                return c; // recuperación
+        }
+    }
+
+    private void error(String msg){
+        System.out.println("Error léxico: " + msg);
+    }
+
+
     public void writeScan() {
         for (Token token : this.Tokens) {
             System.out.println(token.getTokenType().name() + " | " + token.getLexema());

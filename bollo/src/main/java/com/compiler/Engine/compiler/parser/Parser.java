@@ -3,8 +3,11 @@ import com.compiler.Engine.ast.*;
 import com.compiler.Engine.compiler.escaner.Escaner;
 import com.compiler.Engine.compiler.escaner.Token;
 import com.compiler.Engine.compiler.escaner.TokenType;
+import com.compiler.Engine.compiler.parser.exceptions.ExpressionException;
+import com.compiler.Engine.compiler.parser.exceptions.ParserException;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 import org.fxmisc.richtext.CodeArea;
 
@@ -21,7 +24,7 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    private NodoParseTree PROGRAMA() {
+    private NodoParseTree PROGRAMA() throws ParserException {
 
         // Crear nodo raíz del árbol
         NodoParseTree nodoPadre = new NodoParseTree("PROGRAMA");        
@@ -66,9 +69,48 @@ public class Parser {
 
     private NodoParseTree INSTRUCCION(){
 
+        NodoParseTree nodoInstruccion = new NodoParseTree("INSTRUCCION");
+
+        if (this.Tok == TokenType.RBRACE || this.Tok == TokenType.EOF) 
+            return nodoInstruccion;        
+
         // DECLARACION
         if (esTipo(this.Tok)) {
             
+            NodoParseTree nodoDeclaracion = new NodoParseTree("DECLARACION");
+
+
+            nodoDeclaracion.agregarHijo(eat(this.Tok));         
+
+            NodoParseTree izquierda = eat(TokenType.IDENTIFIER);            
+                        
+            if (this.Tok == TokenType.ASSIGN) {
+                NodoParseTree raiz = eat(TokenType.ASSIGN);
+                NodoParseTree derecha = new NodoParseTree("CALCULO");
+                try {    
+                    derecha = CALCULO(TokenType.SEMICOLON);
+                } catch (ExpressionException expressionException) {
+                    System.out.println(expressionException.getMsg());
+                    return nodoInstruccion;
+                }
+
+                raiz.agregarHijo(izquierda);
+                raiz.agregarHijo(derecha);
+
+                nodoDeclaracion.agregarHijo(raiz);
+                nodoDeclaracion.agregarHijo(eat(TokenType.SEMICOLON));
+
+                nodoInstruccion.agregarHijo(nodoDeclaracion);
+
+                nodoInstruccion.agregarHijo(INSTRUCCION());
+            } else {
+                nodoDeclaracion.agregarHijo(izquierda);
+                nodoDeclaracion.agregarHijo(eat(TokenType.SEMICOLON));
+                nodoInstruccion.agregarHijo(nodoDeclaracion);
+                nodoInstruccion.agregarHijo(INSTRUCCION());
+            }
+
+            return nodoInstruccion;
         }
         
         // LLAMADA FUNCION
@@ -98,6 +140,224 @@ public class Parser {
         
 
     }
+    
+    private static Stack<NodoParseTree> operandos = new Stack<>();
+    private static Stack<NodoParseTree> operadores = new Stack<>();
+
+    private NodoParseTree CALCULO(TokenType limite) throws ExpressionException {
+        NodoParseTree nodoCalculo = new NodoParseTree("CALCULO");
+        operandos.clear();
+        operadores.clear();
+        int nivelParentesis = 0; // Contador de paréntesis de agrupación
+        
+        while (this.Tok != TokenType.SEMICOLON && 
+            this.Tok != TokenType.EOF && 
+            this.Tok != limite) {
+            
+            // Procesar operandos
+            if (esOperando(this.Tok)) {
+                if (esFuncion(this.Tok)) {
+                    operandos.push(CALL());
+                } else {
+                    operandos.push(eat(this.Tok));
+                }
+            }
+            // Procesar operadores binarios
+            else if (esOperadorBinario(this.Tok)) {
+                while (!operadores.isEmpty() && 
+                    !operadores.peek().getTipo().equals("LPAREN") &&
+                    getPrecedencia(operadores.peek().getTipo()) >= getPrecedencia(this.Tok.name())) {
+                        
+                    construirSubArbol();
+                }
+                operadores.push(eat(this.Tok));
+            }
+            // Paréntesis izquierdo
+            else if (this.Tok == TokenType.LPAREN) {
+                operadores.push(eat(TokenType.LPAREN));
+                nivelParentesis++; // Incrementar contador
+            }
+            // Paréntesis derecho
+            else if (this.Tok == TokenType.RPAREN) {
+                // Si es un paréntesis de agrupación interno, procesarlo
+                if (nivelParentesis > 0) {
+                    while (!operadores.isEmpty() && 
+                        !operadores.peek().getTipo().equals("LPAREN")) {
+                        construirSubArbol();
+                    }
+                    
+                    if (!operadores.isEmpty() && 
+                        operadores.peek().getTipo().equals("LPAREN")) {
+                        operadores.pop();
+                        nivelParentesis--; // Decrementar contador
+                    }
+                    
+                    eat(TokenType.RPAREN);
+                } 
+                // Si no hay paréntesis internos y el límite es RPAREN, salir
+                else if (limite == TokenType.RPAREN) {
+                    break;
+                }
+                // Paréntesis inesperado
+                else {
+                    System.err.println("Error: Paréntesis de cierre inesperado en línea " + lineaActual);
+                    this.ParserError = true;
+                    break;
+                }
+            }
+            // Coma: si es el límite, salir
+            else if (this.Tok == TokenType.COMMA) {
+                if (limite == TokenType.COMMA) 
+                    break;
+                
+                error("Error: Coma inesperada en línea " + lineaActual);
+                this.ParserError = true;
+                break;
+            }
+            else {
+                break;
+            }
+        }
+
+        // Verificar paréntesis balanceados
+        if (nivelParentesis > 0) {
+            System.err.println("Error: Paréntesis sin cerrar en línea " + lineaActual);
+            this.ParserError = true;
+            return null;
+        }
+
+        // Procesar operadores restantes
+        while (!operadores.isEmpty()) {
+            if (operadores.peek().getTipo().equals("LPAREN")) {
+                this.ParserError = true;
+                System.err.println("Error: Paréntesis sin cerrar en expresión en línea " + lineaActual);
+                throw new ExpressionException("Error: Paréntesis sin cerrar en expresión en línea " + lineaActual);
+            }
+            construirSubArbol();
+        }
+
+        if (!operandos.isEmpty()) {
+            nodoCalculo.agregarHijo(operandos.pop());
+        }
+
+        return nodoCalculo;
+    }
+
+    // Sobrecarga para mantener compatibilidad
+    private NodoParseTree CALCULO() throws ExpressionException{
+        return CALCULO(TokenType.SEMICOLON);
+    }
+
+    private void construirSubArbol() {
+        if (operadores.isEmpty()) {
+            System.err.println("Error: Falta operador en línea " + lineaActual);
+            this.ParserError = true;
+            return;
+        }
+        
+        if (operandos.size() < 2) {
+            System.err.println("Error: Faltan operandos para el operador en línea " + lineaActual);
+            this.ParserError = true;
+            return;
+        }
+        
+        NodoParseTree operador = operadores.pop();
+        NodoParseTree derecho = operandos.pop();
+        NodoParseTree izquierdo = operandos.pop();
+        
+        // El operador es la raíz, con los operandos como hijos
+        operador.agregarHijo(izquierdo);
+        operador.agregarHijo(derecho);
+        
+        // Empujar el subárbol completo de vuelta a operandos
+        operandos.push(operador);
+    }
+
+    private int getPrecedencia(String tipoToken) {
+        try {
+            TokenType tipo = TokenType.valueOf(tipoToken);
+            return tipo.getPrecedencia();
+        } catch (IllegalArgumentException e) {
+            return -1;
+        }
+    }
+
+    // llamada a funciones
+    private NodoParseTree CALL() {  
+        NodoParseTree nodoLlamada = new NodoParseTree("LLAMADA");
+        
+        nodoLlamada.agregarHijo(eat(TokenType.IDENTIFIER));
+        nodoLlamada.agregarHijo(eat(TokenType.LPAREN));
+        
+        // Procesar argumentos usando CALCULO
+        if (this.Tok != TokenType.RPAREN) {
+            NodoParseTree argumentos = new NodoParseTree("ARGUMENTOS");
+            
+            // Primer argumento
+            argumentos.agregarHijo(CALCULO(TokenType.COMMA));
+            
+            // Argumentos adicionales
+            while (this.Tok == TokenType.COMMA) {
+                eat(TokenType.COMMA);
+                argumentos.agregarHijo(CALCULO(TokenType.COMMA));
+            }
+            
+            nodoLlamada.agregarHijo(argumentos);
+        }
+        
+        nodoLlamada.agregarHijo(eat(TokenType.RPAREN));
+        
+        return nodoLlamada;
+    }
+
+    private NodoParseTree ATRIB() {
+
+        NodoParseTree args = new NodoParseTree("ARGS");
+
+        // ε
+        if (this.Tok == TokenType.RPAREN)
+            return args;
+
+        do {
+            args.agregarHijo(ARG());
+
+            if (this.Tok == TokenType.COMMA)
+                eat(TokenType.COMMA);
+            else
+                break;
+
+        } while (true);
+
+        return args;
+    }
+
+    private NodoParseTree ARG() {
+
+        NodoParseTree argNode = new NodoParseTree("ARG");
+
+        if (esFuncion(this.Tok)) {
+            argNode.agregarHijo(CALL());
+            return argNode;
+        }
+
+        switch (this.Tok) {
+            case IDENTIFIER:
+            case NUMBER:
+            case REAL:
+                argNode.agregarHijo(CALCULO());
+                break;
+
+            case STRING:
+                argNode.agregarHijo(eat(TokenType.STRING));
+                break;
+
+            default:
+                error("Argumento inválido");
+        }
+
+        return argNode;
+    }
+
 
     private NodoParseTree IMPORTS() {
         // Si no empieza con #, no hay imports que procesar
@@ -440,61 +700,15 @@ public class Parser {
     }
 
     private NodoParseTree handleElse() {
-        if (this.Tok == ELSE) {
+        if (this.Tok == TokenType.ELSE) {
             NodoParseTree nodoElse = new NodoParseTree("ELSE");
-            nodoElse.agregarHijo(eat(ELSE));
-            nodoElse.agregarHijo(eat(LLAVEOPEN));
+            nodoElse.agregarHijo(eat(TokenType.ELSE));
+            nodoElse.agregarHijo(eat(TokenType.LBRACE));
             nodoElse.agregarHijo(INSTRUCCION());
-            nodoElse.agregarHijo(eat(LLAVECLOSE));
+            nodoElse.agregarHijo(eat(TokenType.RBRACE));
             return nodoElse;
         }
         return null;
-    }
-
-    public NodoParseTree CALCULO() {
-        NodoParseTree nodo = new NodoParseTree("CALCULO");
-        
-        switch (this.Tok) {
-            case ID:
-            case FLOAT:
-            case NUM:
-                nodo.agregarHijo(eat(this.Tok)); 
-                break;
-            case PAROPEN:
-                nodo.agregarHijo(eat(PAROPEN)); 
-                nodo.agregarHijo(CALCULO()); 
-                nodo.agregarHijo(eat(PARCLOSE)); 
-                if (this.Tok == OPER) {
-                    nodo.agregarHijo(eat(OPER));
-                    if (this.Tok == PAROPEN) {
-                        System.out.println("Entrando a CALCULO despues de parentesis");
-                        nodo.agregarHijo(eat(PAROPEN)); 
-                        nodo.agregarHijo(CALCULO()); 
-                        nodo.agregarHijo(eat(PARCLOSE)); 
-                    } else if (this.Tok == ID || this.Tok == FLOAT || this.Tok == NUM) {
-                        nodo.agregarHijo(eat(this.Tok));
-                    }
-                }
-                break;
-        }
-        while (this.Tok == OPER) {
-            nodo.agregarHijo(eat(OPER));
-            switch (this.Tok) {
-                case ID:
-                case FLOAT:
-                case NUM:
-                    nodo.agregarHijo(eat(this.Tok)); 
-                    break;
-                case PAROPEN:
-                    nodo.agregarHijo(eat(PAROPEN)); 
-                    nodo.agregarHijo(CALCULO());
-                    nodo.agregarHijo(eat(PARCLOSE)); 
-                    break;
-                default:
-                    return nodo;
-            }
-        }
-        return nodo;
     }
 
     boolean esReturnable(TokenType t) {
@@ -516,6 +730,39 @@ public class Parser {
             t == TokenType.FLOAT  ||
             t == TokenType.LONG   ||
             t == TokenType.SHORT;
+    }
+
+    boolean esOperadorBinario(TokenType t) {
+        return 
+            t == TokenType.PLUS   ||
+            t == TokenType.MINUS  ||
+            t == TokenType.MUL    ||
+            t == TokenType.DIV    ||
+            t == TokenType.MOD    ||
+            t == TokenType.SHL    ||
+            t == TokenType.SHR   ||
+            t == TokenType.AND   ||
+            t == TokenType.OR    ||
+            t == TokenType.XOR    ||
+            t == TokenType.LAND    ||
+            t == TokenType.LOR;
+            
+    }
+
+    private boolean esOperando(TokenType t) {
+        return
+            t == TokenType.NUMBER       ||
+            t == TokenType.REAL         ||
+            t == TokenType.IDENTIFIER   ||
+            esFuncion(t);
+            
+    }
+    
+    private boolean esOperadorUnario(TokenType t) {
+        return 
+            t == TokenType.INC   ||
+            t == TokenType.DEC;
+            
     }
 
     boolean esFuncion(TokenType t) {
@@ -556,10 +803,9 @@ public class Parser {
             System.out.println("Sin errores de Parser");
     }
     
-    private void Error(Token tok) {
-        this.setParserError(true);        
-        System.out.println("Token inesperado: " + this.Tok.getTokenType().name() + " " + this.Tok.getLexema() + " en la línea " + this.lineaActual);
-        System.out.println("Se esperaba " + tok.getTokenType().name() + " " + tok.getLexema());
+    private void error(String msg) {
+        System.out.println("Error: " + msg);
+        ParserError = true;
     }
 
     public boolean isParserError() {
