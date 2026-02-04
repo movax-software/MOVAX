@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 int main(){
     int x = 90;
     float h = 13.2;
@@ -19,8 +21,8 @@ int main(){
        	print(MSG1);
     } else {
         x=6;
-        print(MSG2);
+        printf(MSG2);
     }
     x=10;
-    print(x);
+    printf(x);
 }
