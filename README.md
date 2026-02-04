@@ -11,7 +11,6 @@ El objetivo es implementar las fases principales de un compilador: análisis lé
 -  Análisis sintáctico basado en gramáticas libres de contexto.  
 -  Análisis semántico con verificación de tipos y alcance de variables.  
 -  Generación de código intermedio.
--  Generación de código objeto/máquina
 -  Interfaz gráfica en JavaFX para facilitar la interacción con el compilador.  
 
 ---
