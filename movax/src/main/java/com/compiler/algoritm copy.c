@@ -4,7 +4,7 @@ void bubbleSort(int nums[], int length);
 void quickSort(int nums[], int inicio, int fin);
 
 int main(){
-    int x = 255 && 0;
+    int x[-2] = {13};
     printf("%d",  x);
     return 0;
 }
