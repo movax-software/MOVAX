@@ -1,43 +1,54 @@
 package com.compiler.Engine.compiler.parser;
-import com.compiler.Engine.ast.*;
-import com.compiler.Engine.compiler.escaner.Escaner;
 import com.compiler.Engine.compiler.escaner.Token;
 import com.compiler.Engine.compiler.escaner.TokenType;
 import com.compiler.Engine.compiler.parser.exceptions.ExpressionException;
 import com.compiler.Engine.compiler.parser.exceptions.ParserException;
 
-import java.util.ArrayList;
+import java.net.Socket;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.Stack;
 
-import org.fxmisc.richtext.CodeArea;
 
 public class Parser {
 
-    private ArrayList<Token> tokens = new ArrayList<>();
+    private LinkedList<Token> tokens = new LinkedList<>();
     private boolean ParserError = false;
     private int lineaActual = 1;
     private TokenType Tok;
     private static int iterator = 0;
     private NodoParseTree arbolSintactico;
 
-    public Parser(ArrayList<Token> tokens, CodeArea codeAreaParser) {
+    public Parser(LinkedList<Token> tokens) {
         this.tokens = tokens;
     }
 
     // "El método" con mayuscula
-    public void parse() throws ParserException {
-        this.arbolSintactico = PROGRAMA();
-
-        if (!this.ParserError && this.Tok != TokenType.EOF) {
-            error("Error: Símbolo inesperado después del programa en línea " + lineaActual);
+   public void parse() throws ParserException {
+        try {
+            PROGRAMA();
+            
+            if (!this.ParserError && this.Tok != TokenType.EOF) {
+                System.err.println("Advertencia: tokens restantes después del análisis");
+            }
+        } catch (Exception e) {
+            // Mostrar árbol parcial
+            if (this.arbolSintactico != null) {
+                System.out.println("\n---------- ÁRBOL SINTÁCTICO PARCIAL ----------");
+                System.out.println(arbolSintactico.toString());
+            }
+            
+            throw new ParserException("Error durante el análisis sintáctico");
         }
     }
 
-    private NodoParseTree PROGRAMA()  {
+    private NodoParseTree PROGRAMA() throws ExpressionException {
 
         // Crear nodo raíz del árbol
-        NodoParseTree nodoPadre = new NodoParseTree("PROGRAMA");        
+        NodoParseTree nodoPadre = new NodoParseTree("PROGRAMA");
+        
+        this.arbolSintactico = nodoPadre;
 
         // agarrar el primer token del escaneado
         this.Tok = this.tokens.get(iterator).getTokenType();
@@ -50,11 +61,10 @@ public class Parser {
         while (esReturnable(this.Tok)) 
             nodoPadre.agregarHijo(FUNCION());
 
-
         return nodoPadre;
-    }    
+    }
 
-    private NodoParseTree FUNCION(){
+    private NodoParseTree FUNCION() throws ExpressionException{
 
         NodoParseTree funcionNodo = new NodoParseTree("FUNCION");
 
@@ -77,35 +87,38 @@ public class Parser {
 
     }
 
-    private NodoParseTree INSTRUCCION(){
+    private NodoParseTree INSTRUCCION() throws ExpressionException{
 
+        System.out.println("--------- INSTRUCCIÓN -----------");
         NodoParseTree nodoInstruccion = new NodoParseTree("INSTRUCCION");
 
         if (this.Tok == TokenType.RBRACE || this.Tok == TokenType.EOF) 
             return nodoInstruccion;        
 
         // DECLARACION
-        if (esTipo(this.Tok)) 
-            return DECLARACION();            
-        
-        
-        // LLAMADA FUNCION
-        if (esFuncion(this.Tok)) {
-            
+        if (esTipo(this.Tok)) {
+            DECLARACION();              
+            System.out.println("DESPUÉS DE DECL");
         }
 
-        // ASIGNACION
-        if (this.Tok == TokenType.IDENTIFIER) {
-            
+        // LLAMADA FUNCION
+        else if (esFuncion(this.Tok)){ 
+            CALL();
         }
+        
+        // ASIGNACION
+        else if (this.Tok == TokenType.IDENTIFIER) {
+             ASIGNACION();
+        } 
+        
 
         // FOR
-        if (this.Tok == TokenType.FOR) {
-            
+        else if (this.Tok == TokenType.FOR) {
+            FOR();
         }
         
         // IF
-        if (this.Tok == TokenType.IF) {
+        else if (this.Tok == TokenType.IF) {
             
         }
         
@@ -113,12 +126,46 @@ public class Parser {
         
         // DO-WHILE
         // SWITCH
-        
 
+        System.out.println("<<<<<<< FIN INSTRUCCIÓN >>>>>>>>");
+        
+        return INSTRUCCION();
+    }
+
+    private NodoParseTree FOR() {
+        NodoParseTree forNodo = new NodoParseTree("FOR");
+
+        forNodo.agregarHijo(eat(TokenType.FOR));
+        forNodo.agregarHijo(eat(TokenType.LPAREN));
+        forNodo.agregarHijo(DECLARACION());
+
+        return forNodo;
     }
     
+    private NodoParseTree ASIGNACION() {
+        
+        NodoParseTree asigNodo = new NodoParseTree("ASIGNACION");
+
+        // asignación a arreglo
+        if (esElementoArray(this.Tok))  // Asignación a arreglo arreglo[a] = CALCULO();
+            asigNodo.agregarHijo(ARRAY_ACCESS());
+        else 
+            asigNodo.agregarHijo(eat(TokenType.IDENTIFIER)); 
+
+        asigNodo.agregarHijo(eat(TokenType.ASSIGN));
+        try {
+            asigNodo.agregarHijo(CALCULO());
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+        asigNodo.agregarHijo(eat(TokenType.SEMICOLON));
+
+        return asigNodo;
+    }
+
     private NodoParseTree DECLARACION() {
 
+        System.out.println("--------- DECLARACIÓN ---------");
         NodoParseTree decl = new NodoParseTree("DECLARACION");
 
         // tipo
@@ -132,66 +179,80 @@ public class Parser {
         if (this.Tok == TokenType.LBRACKET) {
             decl.agregarHijo(eat(TokenType.LBRACKET));
 
-            if (this.Tok != TokenType.RBRACKET) 
-                decl.agregarHijo(CALCULO(TokenType.RBRACKET)); // tamaño
+            if (this.Tok != TokenType.RBRACKET)
+                try {
+                    decl.agregarHijo(CALCULO(TokenType.RBRACKET));
+                } catch (ExpressionException e) {
+                    e.printStackTrace();
+                } // tamaño
             
             decl.agregarHijo(eat(TokenType.RBRACKET));
 
             // inicialización de arreglo
             if (this.Tok == TokenType.ASSIGN) {
                 eat(TokenType.ASSIGN);
-                decl.agregarHijo(INIT_ARRAY());
+                try {
+                    decl.agregarHijo(INIT_ARRAY());
+                } catch (ExpressionException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
         // inicialización normal
         else if (this.Tok == TokenType.ASSIGN) {
             NodoParseTree init = new NodoParseTree("INIT");
-            eat(TokenType.ASSIGN);
-            init.agregarHijo(CALCULO(TokenType.SEMICOLON));
+            init.agregarHijo(eat(TokenType.ASSIGN));
+            try {
+                init.agregarHijo(CALCULO(TokenType.SEMICOLON));
+            } catch (ExpressionException e) {
+                e.printStackTrace();
+            }
             decl.agregarHijo(init);
         }
 
         decl.agregarHijo(eat(TokenType.SEMICOLON));
+
+        System.out.println("-   RETORNANDO DECLARACIÓN ... token: " + this.Tok.name());
         return decl;
     }
 
-    private NodoParseTree INIT_ARRAY() {
+    private NodoParseTree INIT_ARRAY() throws ExpressionException {
 
         NodoParseTree initNode = new NodoParseTree("INIT_ARRAY");
 
-        eat(TokenType.LBRACE);
+        initNode.agregarHijo(eat(TokenType.LBRACE));
 
         if (this.Tok != TokenType.RBRACE) {
 
-            initNode.agregarHijo(
-                CALCULO(Set.of(TokenType.COMMA, TokenType.RBRACE))
-            );
+            initNode.agregarHijo(CALCULO(TokenType.COMMA, TokenType.RBRACE));
 
             while (this.Tok == TokenType.COMMA) {
-                eat(TokenType.COMMA);
-                initNode.agregarHijo(
-                    CALCULO(Set.of(TokenType.COMMA, TokenType.RBRACE))
-                );
+                initNode.agregarHijo(eat(TokenType.COMMA));
+                initNode.agregarHijo(CALCULO(TokenType.COMMA, TokenType.RBRACE));
             }
         }
 
-        eat(TokenType.RBRACE);
+        initNode.agregarHijo(eat(TokenType.RBRACE));
         return initNode;
     }
 
     private static Stack<NodoParseTree> operandos = new Stack<>();
     private static Stack<NodoParseTree> operadores = new Stack<>();
 
-    private NodoParseTree CALCULO(TokenType limite) {
+    private NodoParseTree CALCULO(TokenType... limites) throws ExpressionException {
+
+        System.out.println("---------- CALCULO ----------");
+
+        Set<TokenType> limitesSet = Set.of(limites);        
         NodoParseTree nodoCalculo = new NodoParseTree("CALCULO");
         operandos.clear();
         operadores.clear();
         int nivelParentesis = 0; // Contador de paréntesis de agrupación
         
         while (this.Tok != TokenType.SEMICOLON && 
-            this.Tok != TokenType.EOF && 
-            this.Tok != limite) {
+           this.Tok != TokenType.EOF && 
+           !limitesSet.contains(this.Tok)) {
             
             // Procesar operandos
             if (esOperando(this.Tok)) {
@@ -203,6 +264,7 @@ public class Parser {
                 } 
                 else {
                     operandos.push(eat(this.Tok));
+                    continue;
                 }
             }
             // Procesar operadores binarios
@@ -238,7 +300,7 @@ public class Parser {
                     eat(TokenType.RPAREN);
                 } 
                 // Si no hay paréntesis internos y el límite es RPAREN, salir
-                else if (limite == TokenType.RPAREN) {
+                else if (limitesSet.contains(TokenType.RPAREN)) {
                     break;
                 }
                 // Paréntesis inesperado
@@ -250,10 +312,9 @@ public class Parser {
             }
             // Coma: si es el límite, salir
             else if (this.Tok == TokenType.COMMA) {
-                if (limite == TokenType.COMMA) 
+                if (limitesSet.contains(TokenType.COMMA)) 
                     break;
                 
-                error("Error: Coma inesperada en línea " + lineaActual);
                 this.ParserError = true;
                 break;
             }
@@ -280,6 +341,7 @@ public class Parser {
         }
 
         if (!operandos.isEmpty()) {
+            System.out.println("AGREGANDO HIJO SOLO");
             nodoCalculo.agregarHijo(operandos.pop());
         }
 
@@ -292,6 +354,8 @@ public class Parser {
     }
 
     private void construirSubArbol() {
+
+        System.out.println(" CONSTRUYENDO SUBÁRBOL ...");
         if (operadores.isEmpty()) {
             System.err.println("Error: Falta operador en línea " + lineaActual);
             this.ParserError = true;
@@ -326,7 +390,7 @@ public class Parser {
     }
 
     // llamada a funciones
-    private NodoParseTree CALL() {  
+    private NodoParseTree CALL() throws ExpressionException {  
         NodoParseTree nodoLlamada = new NodoParseTree("LLAMADA");
         
         nodoLlamada.agregarHijo(eat(TokenType.IDENTIFIER));
@@ -356,15 +420,19 @@ public class Parser {
     private NodoParseTree ARRAY_ACCESS() {
         NodoParseTree nodoAccessoArray = new NodoParseTree("ARRAY_ACCESS");
 
-        nodoAccessoArray.agregarHijo(TokenType.IDENTIFIER);
-        nodoAccessoArray.agregarHijo(TokenType.LBRACKET);
-        nodoAccessoArray.agregarHijo(CALCULO(TokenType.RBRACKET));
-        nodoAccessoArray.agregarHijo(TokenType.RBRACKET);
+        nodoAccessoArray.agregarHijo(eat(TokenType.IDENTIFIER));
+        nodoAccessoArray.agregarHijo(eat(TokenType.LBRACKET));
+        try {
+            nodoAccessoArray.agregarHijo(CALCULO(TokenType.RBRACKET));
+        } catch (ExpressionException e) {
+            e.printStackTrace();
+        }
+        nodoAccessoArray.agregarHijo(eat(TokenType.RBRACKET));
         
         return nodoAccessoArray;
     }
 
-    private NodoParseTree ATRIB() {
+    private NodoParseTree ATRIB() throws ExpressionException {
 
         NodoParseTree args = new NodoParseTree("ARGS");
 
@@ -384,7 +452,7 @@ public class Parser {
         return args;
     }
 
-    private NodoParseTree ARG() {
+    private NodoParseTree ARG() throws ExpressionException {
 
         NodoParseTree argNode = new NodoParseTree("ARG");
 
@@ -405,7 +473,7 @@ public class Parser {
                 break;
 
             default:
-                error("Argumento inválido");
+                break;
         }
 
         return argNode;
@@ -426,7 +494,7 @@ public class Parser {
             nodoHijo.agregarHijo(eat(TokenType.HASH));
             nodoHijo.agregarHijo(eat(TokenType.INCLUDE));
             nodoHijo.agregarHijo(eat(TokenType.LT));
-            nodoHijo.agregarHijo(eat(TokenType.IDENTIFIER));
+            nodoHijo.agregarHijo(eat(TokenType.LIB_ID));
             nodoHijo.agregarHijo(eat(TokenType.GT));
             
             listaImports.agregarHijo(nodoHijo);
@@ -532,10 +600,10 @@ public class Parser {
             t == TokenType.IDENTIFIER &&
             tokens.get(iterator+1).getTokenType() == TokenType.LBRACKET;
     }
-
+    
     private NodoParseTree eat(TokenType tok) {
         if (this.ParserError) return null;
-    
+
         if (iterator >= this.tokens.size() || iterator < 0) 
             return null;
         
@@ -544,31 +612,70 @@ public class Parser {
             if (iterator < tokens.size()) 
                 lexema = tokens.get(iterator).getLexema();
             
-            System.out.println("Token reconocido: " + this.Tok.getLexema() + " " + this.Tok.getTokenType().name());
+            System.out.println("Parser: Token reconocido: " + this.Tok.name());
             
             // Crear nodo con tipo, valor y lexema
-            NodoParseTree nodo = new NodoParseTree(this.Tok.getTokenType().name(), null, lexema, lineaActual);
+            NodoParseTree nodo = new NodoParseTree(this.Tok.name(), null, lexema, lineaActual);
             
             Avanzar();
             return nodo;
         } else {
-            Error(tok);
+            System.err.println("\n========== ERROR DE SINTAXIS ==========");
+            System.err.println("Línea " + lineaActual);
+            System.err.println("Se esperaba: " + tok.name());
+            System.err.println("Se obtuvo: " + this.Tok.name());
+            
+            // Mostrar contexto
+            if (iterator < tokens.size()) {
+                System.err.println("Lexema actual: " + tokens.get(iterator).getLexema());
+            }
+            System.err.println("=======================================\n");
+            
+            this.ParserError = true;
+            
+            // Mostrar el árbol sintáctico parcial
+            if (this.arbolSintactico != null) {
+                System.out.println("\n========== ÁRBOL SINTÁCTICO PARCIAL ==========");
+                imprimirArbol(this.arbolSintactico, "", true);
+                System.out.println("==============================================\n");
+            }
+            
+            System.exit(1);
             return null;
         }
     }
 
+    private void imprimirArbol(NodoParseTree nodo, String prefijo, boolean esUltimo) {
+        if (nodo == null) return;
+        
+        System.out.print(prefijo);
+        System.out.print(esUltimo ? "└── " : "├── ");
+        
+        // Mostrar información del nodo
+        String info = nodo.getTipo();
+        if (nodo.getLexema() != null && !nodo.getLexema().isEmpty()) {
+            info += " [" + nodo.getLexema() + "]";
+        }
+        if (nodo.getLinea() > 0) {
+            info += " (línea " + nodo.getLinea() + ")";
+        }
+        System.out.println(info);
+        
+        // Imprimir hijos
+        List<NodoParseTree> hijos = nodo.getHijos();
+        for (int i = 0; i < hijos.size(); i++) {
+            boolean ultimo = (i == hijos.size() - 1);
+            String nuevoPrefijo = prefijo + (esUltimo ? "    " : "│   ");
+            imprimirArbol(hijos.get(i), nuevoPrefijo, ultimo);
+        }
+    }
     private void Avanzar() {
         iterator++;    
 
         if (iterator < tokens.size()) 
-            this.Tok = tokens.get(iterator);
+            this.Tok = tokens.get(iterator).getTokenType();
         else 
             System.out.println("Sin errores de Parser");
-    }
-    
-    private void error(String msg) {
-        System.out.println("Error: " + msg);
-        ParserError = true;
     }
 
     public boolean isParserError() {

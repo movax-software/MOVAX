@@ -3,31 +3,9 @@
     "configurations": [
         {
             "type": "java",
-            "name": "Compilador",
+            "name": "Launch Compiler (CLI)",
             "request": "launch",
-            "mainClass": "compilador.Compilador",
-            "projectName": "COMPILADOR"
-        },
-        {
-            "type": "java",
-            "name": "pruebas",
-            "request": "launch",
-            "mainClass": "com.compiler.pruebas",
-            "projectName": "bollo"
-        },
-        {
-            "type": "java",
-            "name": "prueba",
-            "request": "launch",
-            "mainClass": "com.compiler.UI.controlador.prueba",
-            "projectName": "bollo"
-        },
-        {
-            "type": "java",
-            "name": "Launch JavaFX App",
-            "request": "launch",
-            "mainClass": "com.compiler.UI.UserInterface",
-            "vmArgs": "--module-path \"C:/Program Files/javafx-sdk-17.0.16/lib\" --add-modules javafx.controls,javafx.fxml --enable-native-access=javafx.graphics"
+            "mainClass": "com.compiler.UI.UserInterface"
         }
     ]
 }
