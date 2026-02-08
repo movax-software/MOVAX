@@ -2,13 +2,21 @@
 
 void bubbleSort(int nums[], int length);
 void quickSort(int nums[], int inicio, int fin);
+int getNumber();
 
 int main(){
-    int x[-2] = {13};
-    printf("%d",  x);
+    int i = 43;
+    int p = -12;
+    for (int t = getNumber()+1; t < 20; t++) {
+        printf("%d", t);
+    }
+    
     return 0;
 }
 
+int getNumber() {
+    return 9;
+}
 void bubbleSort(int nums[], int length){    
     
     for (int i = 0; i < length-1; i++)

@@ -3,11 +3,9 @@
 int main(){
     int x = 90;
     float h = 13.2;
-    int y = 70;
+    int y = 70 + 4 * 6;
     int a = 5;
-    String MSG1 = "Luis";
-    String MSG2 = "Daniel";
-    
+
     for(int i=0;i<10;i++){
         int f = 10;
         printf(((f+i)*a));

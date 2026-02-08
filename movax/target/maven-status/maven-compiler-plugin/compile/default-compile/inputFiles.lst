@@ -1,13 +1,32 @@
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\Archivo.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\Assembly.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\BinLine.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\Escaner.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\NodoArbol.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\ObjectCode.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\Parser.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\Semantico.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\Simbolo.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\Engine\TablaDeSimbolos.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\UI\controlador\EditorController.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\UI\controlador\LoginController.java
-C:\Users\luisd\Documents\5to Semestre\Lenguajes y Automatas 2\Compiler\Compiler\bollo\src\main\java\com\compiler\UI\UserInterface.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\animations\AutomataVisualizer.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\animations\EscanerAnimado.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\animations\VentanaAnimacionEscanerSinFXML.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\Archivo.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\BinLine.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\compiler\escaner\Escaner.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\compiler\escaner\Token.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\compiler\escaner\TokenType.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\compiler\parser\exceptions\ExpressionException.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\compiler\parser\exceptions\ParserException.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\compiler\parser\NodoParseTree.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\compiler\parser\Parser.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\blocks\FullAdder.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\blocks\HalfAdder.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\blocks\NBitAdder.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\AndGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\NandGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\NotGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\OrGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\Transistored\TransistoredAndGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\Transistored\TransistoredNotGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\Transistored\TransistoredOrGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Gates\XorGate.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\electronics\Transistors\Transistor.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\hardware\interfaces\Component.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\ObjectCode.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\Simbolo.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\Engine\TablaDeSimbolos.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\pruebas.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\UI\controlador\AnimacionEscanerController.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\UI\controlador\LoginController.java
+C:\Users\luisd\Documents\Compilador\movax\src\main\java\com\compiler\UI\UserInterface.java

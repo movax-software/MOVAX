@@ -40,14 +40,15 @@ public class Escaner {
         Map.entry("void", TokenType.VOID),
         Map.entry("volatile", TokenType.VOLATILE),
         Map.entry("while", TokenType.WHILE),
-        Map.entry("_Packed", TokenType.PACKED)
+        Map.entry("_Packed", TokenType.PACKED),
+        Map.entry("include", TokenType.INCLUDE)
     );
 
 
     private int lineaActual = 1;
     private boolean hasError = false;    
     private String CodigoFuente;
-    private List<Token> Tokens = new LinkedList<>();
+    public LinkedList<Token> Tokens = new LinkedList<>();
 
     public Escaner(String codigoFuente) {
         this.CodigoFuente = codigoFuente;
@@ -77,7 +78,6 @@ public class Escaner {
                 i++;
                 continue;
             }
-            
             if (Character.isLetter(c) || c == '_') {
                 Token.setLength(0);
 
@@ -91,9 +91,27 @@ public class Escaner {
                 if (palabrasReservadas.containsKey(palabra)) {
                     this.Tokens.add(new Token(palabrasReservadas.get(palabra), palabra));
                     continue;
-
                 } else {
-                    this.Tokens.add(new Token(TokenType.IDENTIFIER, palabra));
+                    // Verificar si es una biblioteca (ej: stdio.h)
+                    if (i < chars.length - 2 && 
+                        chars[i] == '.' && 
+                        Character.isLetter(chars[i + 1])) {
+                        
+                        Token.append('.');  // Añadir el punto
+                        i++;  // Saltar el punto
+                        
+                        // Consumir la extensión (ej: 'h' en stdio.h)
+                        while (i < chars.length && 
+                            (Character.isLetter(chars[i]) || Character.isDigit(chars[i]))) {
+                            Token.append(chars[i]);
+                            i++;
+                        }
+                        
+                        this.Tokens.add(new Token(TokenType.LIB_ID, Token.toString()));
+                    } else {
+                        this.Tokens.add(new Token(TokenType.IDENTIFIER, palabra));
+                    }
+                    
                     continue;
                 }
             }
@@ -245,6 +263,19 @@ public class Escaner {
                     i++; 
                 } else {
                     Tokens.add(new Token(TokenType.LT, Token.toString())); 
+                }
+                continue;
+            }
+            if (c == '>') {
+                Token.setLength(0); 
+                Token.append(c); 
+                i++;
+                if (i < chars.length && chars[i] == '=') {                     
+                    Token.append('='); 
+                    Tokens.add(new Token(TokenType.GE, Token.toString()));
+                    i++; 
+                } else {
+                    Tokens.add(new Token(TokenType.GT, Token.toString())); 
                 }
                 continue;
             }
@@ -433,7 +464,9 @@ public class Escaner {
             continue;
             }
 
-
+            if (i == chars.length) {
+                Tokens.add(new Token(TokenType.EOF, ""));
+            }
 
             if (c == '#') {
                 Tokens.add(new Token(TokenType.HASH, "#"));
@@ -441,6 +474,7 @@ public class Escaner {
                 continue;
             }
             
+            System.out.println("NO RECONOCIDO: " + String.valueOf(c));
             // Token inválido
             Tokens.add(new Token(TokenType.UNKNOWN, String.valueOf(c)));
             hasError = true;
