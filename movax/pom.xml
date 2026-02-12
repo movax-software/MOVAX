@@ -7,12 +7,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.compiler</groupId>
-    <artifactId>bollo</artifactId>
+    <artifactId>movax</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
+
 
         <javafx.version>25.0.2</javafx.version>
         <richtextfx.version>0.11.2</richtextfx.version>

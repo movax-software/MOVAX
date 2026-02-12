@@ -30,16 +30,16 @@ public class Parser {
             PROGRAMA();
             
             if (!this.ParserError && this.Tok != TokenType.EOF) {
-                System.err.println("Advertencia: tokens restantes después del análisis");
+                System.err.println("Advertencia: tokens restantes despues del análisis");
             }
         } catch (Exception e) {
             // Mostrar árbol parcial
             if (this.arbolSintactico != null) {
-                System.out.println("\n---------- ÁRBOL SINTÁCTICO PARCIAL ----------");
+                System.out.println("\n---------- ÁRBOL SINTACTICO PARCIAL ----------");
                 System.out.println(arbolSintactico.toString());
             }
             
-            throw new ParserException("Error durante el análisis sintáctico");
+            throw new ParserException("Error durante el analisis sintáctico");
         }
     }
 
@@ -89,7 +89,7 @@ public class Parser {
 
     private NodoParseTree INSTRUCCION() throws ExpressionException{
 
-        System.out.println("--------- INSTRUCCIÓN -----------");
+        System.out.println("--------- INSTRUCCION -----------");
         NodoParseTree nodoInstruccion = new NodoParseTree("INSTRUCCION");
 
         if (this.Tok == TokenType.RBRACE || this.Tok == TokenType.EOF) 
@@ -98,7 +98,7 @@ public class Parser {
         // DECLARACION
         if (esTipo(this.Tok)) {
             DECLARACION();              
-            System.out.println("DESPUÉS DE DECL");
+            System.out.println("DESPUES DE DECL");
         }
 
         // LLAMADA FUNCION
@@ -127,7 +127,7 @@ public class Parser {
         // DO-WHILE
         // SWITCH
 
-        System.out.println("<<<<<<< FIN INSTRUCCIÓN >>>>>>>>");
+        System.out.println("<<<<<<< FIN INSTRUCCION >>>>>>>>");
         
         return INSTRUCCION();
     }
@@ -657,7 +657,7 @@ public class Parser {
             info += " [" + nodo.getLexema() + "]";
         }
         if (nodo.getLinea() > 0) {
-            info += " (línea " + nodo.getLinea() + ")";
+            info += " (linea " + nodo.getLinea() + ")";
         }
         System.out.println(info);
         
