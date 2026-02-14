@@ -92,11 +92,11 @@ public class NodoParseTree {
         
         // Agregar lexema si existe
         if (lexema != null && !lexema.isEmpty()) {
-            sb.append(" [").append(lexema).append("]");
+            sb.append(" [").append(getLexema()).append("]");
         }
         // Si no hay lexema pero hay valor, mostrar valor
         else if (valor != null && !valor.isEmpty() && !valor.equals(tipo)) {
-            sb.append(" (").append(valor).append(")");
+            sb.append(" (").append(getTipo()).append(")");
         }
         
         sb.append("\n");

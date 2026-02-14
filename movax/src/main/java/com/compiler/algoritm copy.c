@@ -7,7 +7,7 @@ int getNumber();
 int main(){
     int i = 43;
     int p = -12;
-    for (int t = getNumber()+1; t < 20; t++) {
+    for (int t = getNumber()+1; t < 20; i++) {
         printf("%d", t);
     }
     

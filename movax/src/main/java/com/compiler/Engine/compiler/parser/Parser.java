@@ -4,7 +4,6 @@ import com.compiler.Engine.compiler.escaner.TokenType;
 import com.compiler.Engine.compiler.parser.exceptions.ExpressionException;
 import com.compiler.Engine.compiler.parser.exceptions.ParserException;
 
-import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -26,21 +25,18 @@ public class Parser {
 
     // "El método" con mayuscula
    public void parse() throws ParserException {
-        try {
-            PROGRAMA();
-            
-            if (!this.ParserError && this.Tok != TokenType.EOF) {
-                System.err.println("Advertencia: tokens restantes despues del análisis");
-            }
-        } catch (Exception e) {
-            // Mostrar árbol parcial
-            if (this.arbolSintactico != null) {
-                System.out.println("\n---------- ÁRBOL SINTACTICO PARCIAL ----------");
-                System.out.println(arbolSintactico.toString());
-            }
-            
-            throw new ParserException("Error durante el analisis sintáctico");
+        PROGRAMA();
+        
+        if (!this.ParserError && this.Tok != TokenType.EOF) 
+            System.err.println("Advertencia: tokens restantes despues del análisis");
+        
+        // Mostrar árbol parcial
+        if (this.arbolSintactico != null) {
+            System.out.println("\n---------- ÁRBOL SINTACTICO PARCIAL ----------");
+            System.out.println(arbolSintactico.toString());
         }
+        
+        throw new ParserException("Error durante el analisis sintáctico");
     }
 
     private NodoParseTree PROGRAMA() throws ExpressionException {
@@ -64,7 +60,7 @@ public class Parser {
         return nodoPadre;
     }
 
-    private NodoParseTree FUNCION() throws ExpressionException{
+    private NodoParseTree FUNCION()  {
 
         NodoParseTree funcionNodo = new NodoParseTree("FUNCION");
 
@@ -87,9 +83,9 @@ public class Parser {
 
     }
 
-    private NodoParseTree INSTRUCCION() throws ExpressionException{
+    private NodoParseTree INSTRUCCION() {
 
-        System.out.println("--------- INSTRUCCION -----------");
+        System.out.println("\n--------- INSTRUCCION -----------");
         NodoParseTree nodoInstruccion = new NodoParseTree("INSTRUCCION");
 
         if (this.Tok == TokenType.RBRACE || this.Tok == TokenType.EOF) 
@@ -98,7 +94,6 @@ public class Parser {
         // DECLARACION
         if (esTipo(this.Tok)) {
             DECLARACION();              
-            System.out.println("DESPUES DE DECL");
         }
 
         // LLAMADA FUNCION
@@ -127,8 +122,11 @@ public class Parser {
         // DO-WHILE
         // SWITCH
 
+        nodoInstruccion.agregarHijo(eat(TokenType.SEMICOLON));
         System.out.println("<<<<<<< FIN INSTRUCCION >>>>>>>>");
         
+        
+
         return INSTRUCCION();
     }
 
@@ -137,8 +135,17 @@ public class Parser {
 
         forNodo.agregarHijo(eat(TokenType.FOR));
         forNodo.agregarHijo(eat(TokenType.LPAREN));
+        
         forNodo.agregarHijo(DECLARACION());
+        forNodo.agregarHijo(COMPARACION(TokenType.SEMICOLON));
+        forNodo.agregarHijo(ASIGNACION());
 
+        forNodo.agregarHijo(eat(TokenType.RPAREN));
+        
+        forNodo.agregarHijo(eat(TokenType.LBRACE));
+        forNodo.agregarHijo(INSTRUCCION());
+        forNodo.agregarHijo(eat(TokenType.RBRACE));
+        
         return forNodo;
     }
     
@@ -165,7 +172,7 @@ public class Parser {
 
     private NodoParseTree DECLARACION() {
 
-        System.out.println("--------- DECLARACIÓN ---------");
+        System.out.println("\n--------- DECLARACION ---------");
         NodoParseTree decl = new NodoParseTree("DECLARACION");
 
         // tipo
@@ -180,22 +187,14 @@ public class Parser {
             decl.agregarHijo(eat(TokenType.LBRACKET));
 
             if (this.Tok != TokenType.RBRACKET)
-                try {
-                    decl.agregarHijo(CALCULO(TokenType.RBRACKET));
-                } catch (ExpressionException e) {
-                    e.printStackTrace();
-                } // tamaño
+                decl.agregarHijo(CALCULO(TokenType.RBRACKET));
             
             decl.agregarHijo(eat(TokenType.RBRACKET));
 
             // inicialización de arreglo
             if (this.Tok == TokenType.ASSIGN) {
                 eat(TokenType.ASSIGN);
-                try {
-                    decl.agregarHijo(INIT_ARRAY());
-                } catch (ExpressionException e) {
-                    e.printStackTrace();
-                }
+                decl.agregarHijo(INIT_ARRAY());
             }
         }
 
@@ -203,21 +202,14 @@ public class Parser {
         else if (this.Tok == TokenType.ASSIGN) {
             NodoParseTree init = new NodoParseTree("INIT");
             init.agregarHijo(eat(TokenType.ASSIGN));
-            try {
-                init.agregarHijo(CALCULO(TokenType.SEMICOLON));
-            } catch (ExpressionException e) {
-                e.printStackTrace();
-            }
+            init.agregarHijo(CALCULO(TokenType.SEMICOLON));
             decl.agregarHijo(init);
         }
 
-        decl.agregarHijo(eat(TokenType.SEMICOLON));
-
-        System.out.println("-   RETORNANDO DECLARACIÓN ... token: " + this.Tok.name());
         return decl;
     }
 
-    private NodoParseTree INIT_ARRAY() throws ExpressionException {
+    private NodoParseTree INIT_ARRAY()  {
 
         NodoParseTree initNode = new NodoParseTree("INIT_ARRAY");
 
@@ -240,9 +232,9 @@ public class Parser {
     private static Stack<NodoParseTree> operandos = new Stack<>();
     private static Stack<NodoParseTree> operadores = new Stack<>();
 
-    private NodoParseTree CALCULO(TokenType... limites) throws ExpressionException {
+    private NodoParseTree CALCULO(TokenType... limites)  {
 
-        System.out.println("---------- CALCULO ----------");
+        System.out.println("\n---------- CALCULO ----------");
 
         Set<TokenType> limitesSet = Set.of(limites);        
         NodoParseTree nodoCalculo = new NodoParseTree("CALCULO");
@@ -335,7 +327,6 @@ public class Parser {
             if (operadores.peek().getTipo().equals("LPAREN")) {
                 this.ParserError = true;
                 System.err.println("Error: Paréntesis sin cerrar en expresión en línea " + lineaActual);
-                throw new ExpressionException("Error: Paréntesis sin cerrar en expresión en línea " + lineaActual);
             }
             construirSubArbol();
         }
@@ -344,18 +335,20 @@ public class Parser {
             System.out.println("AGREGANDO HIJO SOLO");
             nodoCalculo.agregarHijo(operandos.pop());
         }
-
+        
+        System.out.println("    Arbol de cálculo");
+        System.out.println("    " + nodoCalculo.imprimirArbol() + "\n");
         return nodoCalculo;
     }
 
     // Sobrecarga para mantener compatibilidad
-    private NodoParseTree CALCULO() throws ExpressionException{
+    private NodoParseTree CALCULO() {
         return CALCULO(TokenType.SEMICOLON);
     }
 
     private void construirSubArbol() {
 
-        System.out.println(" CONSTRUYENDO SUBÁRBOL ...");
+        System.out.println("\n    CONSTRUYENDO SUBÁRBOL ...");
         if (operadores.isEmpty()) {
             System.err.println("Error: Falta operador en línea " + lineaActual);
             this.ParserError = true;
@@ -390,7 +383,7 @@ public class Parser {
     }
 
     // llamada a funciones
-    private NodoParseTree CALL() throws ExpressionException {  
+    private NodoParseTree CALL() {  
         NodoParseTree nodoLlamada = new NodoParseTree("LLAMADA");
         
         nodoLlamada.agregarHijo(eat(TokenType.IDENTIFIER));
@@ -422,17 +415,13 @@ public class Parser {
 
         nodoAccessoArray.agregarHijo(eat(TokenType.IDENTIFIER));
         nodoAccessoArray.agregarHijo(eat(TokenType.LBRACKET));
-        try {
-            nodoAccessoArray.agregarHijo(CALCULO(TokenType.RBRACKET));
-        } catch (ExpressionException e) {
-            e.printStackTrace();
-        }
+        nodoAccessoArray.agregarHijo(CALCULO(TokenType.RBRACKET));        
         nodoAccessoArray.agregarHijo(eat(TokenType.RBRACKET));
         
         return nodoAccessoArray;
     }
 
-    private NodoParseTree ATRIB() throws ExpressionException {
+    private NodoParseTree ATRIB() {
 
         NodoParseTree args = new NodoParseTree("ARGS");
 
@@ -452,7 +441,7 @@ public class Parser {
         return args;
     }
 
-    private NodoParseTree ARG() throws ExpressionException {
+    private NodoParseTree ARG()  {
 
         NodoParseTree argNode = new NodoParseTree("ARG");
 
@@ -533,6 +522,55 @@ public class Parser {
         } while (esTipo(this.Tok));
 
         return params;
+    }
+
+    private NodoParseTree COMPARACION(TokenType... limites) {
+
+        System.out.println("\n---------- COMPARACION ----------");
+
+        Set<TokenType> limitesSet = limites.length > 0 ? 
+            Set.of(limites) : 
+            Set.of(TokenType.SEMICOLON, TokenType.RPAREN);
+        
+        // Primer operando
+        NodoParseTree izquierdo = CALCULO(TokenType.EQ, TokenType.NE, 
+                                        TokenType.LT, TokenType.GT,
+                                        TokenType.LE, TokenType.GE);
+        
+        // Procesar operadores de comparación
+        while ((esOperadorComparacion(this.Tok) || esOperadorLogico(this.Tok)) && 
+            !limitesSet.contains(this.Tok) && 
+            !this.ParserError) {
+            
+            NodoParseTree operador = eat(this.Tok);
+            NodoParseTree derecho = CALCULO(TokenType.EQ, TokenType.NE, 
+                                            TokenType.LT, TokenType.GT,
+                                            TokenType.LE, TokenType.GE,
+                                            TokenType.AND, TokenType.OR);
+            
+            // Construir subárbol
+            operador.agregarHijo(izquierdo);
+            operador.agregarHijo(derecho);
+              
+            System.out.println("    Arbol de comparacion");
+            System.out.println(operador.imprimirArbol() + "\n");
+            
+            izquierdo = operador; // El resultado se convierte en el nuevo operando izquierdo
+        }
+        
+      
+        return izquierdo;
+    }
+
+    // Métodos auxiliares
+    private boolean esOperadorComparacion(TokenType tok) {
+        return tok == TokenType.EQ || tok == TokenType.NE ||
+            tok == TokenType.LT || tok == TokenType.GT ||
+            tok == TokenType.LE || tok == TokenType.GE;
+    }
+
+    private boolean esOperadorLogico(TokenType tok) {
+        return tok == TokenType.AND || tok == TokenType.OR;
     }
 
     private boolean esReturnable(TokenType t) {
@@ -637,7 +675,6 @@ public class Parser {
             if (this.arbolSintactico != null) {
                 System.out.println("\n========== ÁRBOL SINTÁCTICO PARCIAL ==========");
                 imprimirArbol(this.arbolSintactico, "", true);
-                System.out.println("==============================================\n");
             }
             
             System.exit(1);

@@ -1,5 +1,5 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.configuration.updateBuildConfiguration": "automatic",
     "css.lint.vendorPrefix": "ignore",
     "java.debug.settings.onBuildFailureProceed": true
 
