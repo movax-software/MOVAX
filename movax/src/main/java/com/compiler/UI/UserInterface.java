@@ -12,11 +12,14 @@ public class UserInterface {
                 #include <stdio.h>
                 int main(){
                     int x = 90;
-                    float h = 13.2;
-                    int y = 70 * (2 + h);
-                    int a = 5;
                     
-                    for(int i=0;i<10;i++){
+                    if ((x) > 50+x) {
+                        printf("x es mayor que 50");
+                    } else {
+                        printf("x es menor o igual a 50");
+                    }
+                    
+                    for(int i=0;(i+3)<10;i++){
                         int f = 10;
                         printf(((f+i)*a));
                     }

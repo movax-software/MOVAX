@@ -3,7 +3,7 @@
 int main(){
     int x = 90;
     float h = 13.2;
-    int y = 70 + 4 * 6;
+    int y = 70 * (2 + h);
     int a = 5;
 
     for(int i=0;i<10;i++){
