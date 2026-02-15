@@ -36,9 +36,10 @@ public class Parser {
             System.out.println(arbolSintactico.toString());
         }
         
-        throw new ParserException("Error durante el analisis sintáctico");
+        if (this.ParserError) {
+            throw new ParserException("Error de sintaxis en línea " + lineaActual);
+        }
     }
-
     private NodoParseTree PROGRAMA() throws ExpressionException {
 
         // Crear nodo raíz del árbol
@@ -83,9 +84,10 @@ public class Parser {
 
     }
 
-    private NodoParseTree INSTRUCCION() {
+   private NodoParseTree INSTRUCCION() {
 
         System.out.println("\n--------- INSTRUCCION -----------");
+        System.out.println(">>> Token actual al iniciar INSTRUCCION: " + this.Tok);
         NodoParseTree nodoInstruccion = new NodoParseTree("INSTRUCCION");
 
         if (this.Tok == TokenType.RBRACE || this.Tok == TokenType.EOF) 
@@ -93,62 +95,160 @@ public class Parser {
 
         // DECLARACION
         if (esTipo(this.Tok)) {
-            DECLARACION();              
+            nodoInstruccion.agregarHijo(DECLARACION());
+            nodoInstruccion.agregarHijo(eat(TokenType.SEMICOLON));
         }
-
         // LLAMADA FUNCION
         else if (esFuncion(this.Tok)){ 
-            CALL();
+            nodoInstruccion.agregarHijo(CALL());
+            nodoInstruccion.agregarHijo(eat(TokenType.SEMICOLON));
         }
-        
         // ASIGNACION
         else if (this.Tok == TokenType.IDENTIFIER) {
-             ASIGNACION();
-        } 
-        
-
+            nodoInstruccion.agregarHijo(ASIGNACION());
+            // ASIGNACION ya consume el SEMICOLON, no lo vuelvas a comer aquí
+        }
         // FOR
         else if (this.Tok == TokenType.FOR) {
-            FOR();
+            nodoInstruccion.agregarHijo(FOR());
+            // FOR no termina con SEMICOLON
         }
-        
         // IF
         else if (this.Tok == TokenType.IF) {
-            
+            nodoInstruccion.agregarHijo(IF());
+            // IF no termina con SEMICOLON
         }
-        
-        // WHILE
-        
-        // DO-WHILE
-        // SWITCH
-
-        nodoInstruccion.agregarHijo(eat(TokenType.SEMICOLON));
+        else {
+            System.out.println("\nÁrbol parcial actual: " + this.arbolSintactico.imprimirArbol());
+            System.err.println("Error: Token inesperado en INSTRUCCION: " + this.Tok);
+            this.ParserError = true;
+            return null;
+        }
         System.out.println("<<<<<<< FIN INSTRUCCION >>>>>>>>");
         
-        
-
         return INSTRUCCION();
     }
 
+    private NodoParseTree IF() {
+        System.out.println("\n========== IF ==========");
+        NodoParseTree ifNodo = new NodoParseTree("IF");
+        
+        ifNodo.agregarHijo(eat(TokenType.IF));
+        ifNodo.agregarHijo(eat(TokenType.LPAREN));
+        
+        ifNodo.agregarHijo(CALCULO());
+        
+        ifNodo.agregarHijo(eat(TokenType.RPAREN));
+        
+        // Cuerpo del if
+        ifNodo.agregarHijo(eat(TokenType.LBRACE));
+        
+        NodoParseTree cuerpoIf = new NodoParseTree("IF_BODY");
+        while (this.Tok != TokenType.RBRACE && this.Tok != TokenType.EOF && !this.ParserError) {
+            NodoParseTree instr = INSTRUCCION();
+            if (instr != null) 
+                cuerpoIf.agregarHijo(instr);
+        }
+        ifNodo.agregarHijo(cuerpoIf);
+        
+        ifNodo.agregarHijo(eat(TokenType.RBRACE));
+        
+        // Else opcional
+        if (this.Tok == TokenType.ELSE) {
+            ifNodo.agregarHijo(eat(TokenType.ELSE));
+            ifNodo.agregarHijo(eat(TokenType.LBRACE));
+            
+            NodoParseTree cuerpoElse = new NodoParseTree("ELSE_BODY");
+            while (this.Tok != TokenType.RBRACE && this.Tok != TokenType.EOF && !this.ParserError) {
+                NodoParseTree instr = INSTRUCCION();
+                if (instr != null) {
+                    cuerpoElse.agregarHijo(instr);
+                }
+            }
+            ifNodo.agregarHijo(cuerpoElse);
+            
+            ifNodo.agregarHijo(eat(TokenType.RBRACE));
+        }
+        
+        System.out.println("\n>>> Arbol completo del IF:");
+        System.out.println(ifNodo.imprimirArbol() + "\n");
+        
+        return ifNodo;
+    }
+
     private NodoParseTree FOR() {
+        System.out.println("\n╔════════════════════════════════════╗");
+        System.out.println("║          PROCESANDO FOR            ║");
+        System.out.println("╚════════════════════════════════════╝");
+        
         NodoParseTree forNodo = new NodoParseTree("FOR");
 
         forNodo.agregarHijo(eat(TokenType.FOR));
         forNodo.agregarHijo(eat(TokenType.LPAREN));
         
+        // 1. Declaración
+        System.out.println("\n--- 1. INICIALIZACIÓN ---");
         forNodo.agregarHijo(DECLARACION());
-        forNodo.agregarHijo(COMPARACION(TokenType.SEMICOLON));
-        forNodo.agregarHijo(ASIGNACION());
-
+        eat(TokenType.SEMICOLON);
+        
+        System.out.println("\n--- 2. CONDICIÓN ---");
+        System.out.println("Token al iniciar condición: " + this.Tok);
+        
+        forNodo.agregarHijo(CALCULO());
+        
+        System.out.println("Token después de CALCULO: " + this.Tok);
+        eat(TokenType.SEMICOLON);
+        
+        // 3. Incremento
+        System.out.println("\n--- 3. INCREMENTO ---");
+        System.out.println("Token al iniciar incremento: " + this.Tok);
+        
+        NodoParseTree incremento = new NodoParseTree("INCREMENTO");
+        
+        if (this.Tok == TokenType.IDENTIFIER) {
+            if (esElementoArray(this.Tok)) {
+                incremento.agregarHijo(ARRAY_ACCESS());
+            } else {
+                incremento.agregarHijo(eat(TokenType.IDENTIFIER));
+            }
+            
+            if (this.Tok == TokenType.INC || this.Tok == TokenType.DEC) {
+                System.out.println("• Operador de incremento/decremento: " + this.Tok);
+                incremento.agregarHijo(eat(this.Tok));
+            } else if (this.Tok == TokenType.ASSIGN) {
+                System.out.println("• Asignación en incremento");
+                incremento.agregarHijo(eat(TokenType.ASSIGN));
+                incremento.agregarHijo(CALCULO());
+            }
+        }
+        
+        forNodo.agregarHijo(incremento);
         forNodo.agregarHijo(eat(TokenType.RPAREN));
         
+        // 4. Cuerpo
+        System.out.println("\n--- 4. CUERPO ---");
         forNodo.agregarHijo(eat(TokenType.LBRACE));
-        forNodo.agregarHijo(INSTRUCCION());
+        
+        NodoParseTree cuerpo = new NodoParseTree("FOR_BODY");
+        while (this.Tok != TokenType.RBRACE && this.Tok != TokenType.EOF && !this.ParserError) {
+            NodoParseTree instr = INSTRUCCION();
+            if (instr != null) {
+                cuerpo.agregarHijo(instr);
+            }
+        }
+        forNodo.agregarHijo(cuerpo);
+        
         forNodo.agregarHijo(eat(TokenType.RBRACE));
+        
+        System.out.println("\n╔════════════════════════════════════╗");
+        System.out.println("║      ÁRBOL FOR COMPLETO            ║");
+        System.out.println("╚════════════════════════════════════╝");
+        System.out.println(forNodo.imprimirArbol());
+        System.out.println("════════════════════════════════════\n");
         
         return forNodo;
     }
-    
+            
     private NodoParseTree ASIGNACION() {
         
         NodoParseTree asigNodo = new NodoParseTree("ASIGNACION");
@@ -234,129 +334,187 @@ public class Parser {
 
     private NodoParseTree CALCULO(TokenType... limites)  {
 
-        System.out.println("\n---------- CALCULO ----------");
+        System.out.println("\n========================================");
+        System.out.println("        INICIANDO CALCULO");
+        System.out.println("========================================");
 
         Set<TokenType> limitesSet = Set.of(limites);        
         NodoParseTree nodoCalculo = new NodoParseTree("CALCULO");
         operandos.clear();
         operadores.clear();
-        int nivelParentesis = 0; // Contador de paréntesis de agrupación
+        int nivelParentesis = 0;
+        
+        if (limites.length > 0) {
+            System.out.println("Límites configurados: " + java.util.Arrays.toString(limites));
+        }
         
         while (this.Tok != TokenType.SEMICOLON && 
-           this.Tok != TokenType.EOF && 
-           !limitesSet.contains(this.Tok)) {
+            this.Tok != TokenType.EOF && 
+            !limitesSet.contains(this.Tok)) {
+            
+            System.out.println("\n─────────────────────────────────────");
+            System.out.println("Token: " + this.Tok + " | Nivel paréntesis: " + nivelParentesis);
+            System.out.println("Operandos en pila: " + operandos.size() + " | Operadores en pila: " + operadores.size());
             
             // Procesar operandos
-            if (esOperando(this.Tok)) {
+            if (esOperando(this.Tok) || this.Tok == TokenType.STRING) {
+                System.out.println("→ OPERANDO detectado");
+                
                 if (esFuncion(this.Tok)) {
+                    System.out.println("  • Es una función, procesando CALL...");
                     operandos.push(CALL());
                 } 
                 else if (esElementoArray(this.Tok)) {
+                    System.out.println("  • Es acceso a array, procesando ARRAY_ACCESS...");
                     operandos.push(ARRAY_ACCESS());    
                 } 
                 else {
+                    System.out.println("  • Agregando operando: " + this.Tok);
                     operandos.push(eat(this.Tok));
-                    continue;
                 }
             }
-            // Procesar operadores binarios
-            else if (esOperadorBinario(this.Tok)) {
+            // Procesar TODOS los operadores
+            else if (this.Tok.esOperador()) {
+                System.out.println("→ OPERADOR detectado: " + this.Tok + " (precedencia: " + this.Tok.getPrecedencia() + ")");
+                
                 while (!operadores.isEmpty() && 
                     !operadores.peek().getTipo().equals("LPAREN") &&
-                    getPrecedencia(operadores.peek().getTipo()) >= getPrecedencia(this.Tok.name())) {
-                        
+                    getPrecedenciaDeNodo(operadores.peek()) <= this.Tok.getPrecedencia()) {
+                    
+                    System.out.println("  • Precedencia del operador en pila (" + operadores.peek().getTipo() + 
+                                    ": " + getPrecedenciaDeNodo(operadores.peek()) + 
+                                    ") ≤ precedencia actual (" + this.Tok.getPrecedencia() + ")");
+                    System.out.println("  • Construyendo subárbol antes de apilar nuevo operador...");
                     construirSubArbol();
                 }
+                
+                System.out.println("  • Apilando operador: " + this.Tok);
                 operadores.push(eat(this.Tok));
             }
             // Paréntesis izquierdo
             else if (this.Tok == TokenType.LPAREN) {
+                System.out.println("→ PARÉNTESIS IZQUIERDO");
                 operadores.push(eat(TokenType.LPAREN));
-                nivelParentesis++; // Incrementar contador
+                nivelParentesis++;
+                System.out.println("  • Nivel de paréntesis incrementado a: " + nivelParentesis);
             }
-            // Paréntesis derecho
+                        // Paréntesis derecho
             else if (this.Tok == TokenType.RPAREN) {
-                // Si es un paréntesis de agrupación interno, procesarlo
+                System.out.println("→ PARÉNTESIS DERECHO (nivel actual: " + nivelParentesis + ")");
+                
                 if (nivelParentesis > 0) {
+                    System.out.println("  • Es un paréntesis de agrupación interno");
+                    System.out.println("  • Procesando operadores hasta encontrar LPAREN...");
+                    
                     while (!operadores.isEmpty() && 
                         !operadores.peek().getTipo().equals("LPAREN")) {
+                        System.out.println("    ├─ Construyendo subárbol con: " + operadores.peek().getTipo());
                         construirSubArbol();
                     }
                     
                     if (!operadores.isEmpty() && 
                         operadores.peek().getTipo().equals("LPAREN")) {
                         operadores.pop();
-                        nivelParentesis--; // Decrementar contador
+                        nivelParentesis--;
+                        System.out.println("  • LPAREN eliminado. Nivel ahora: " + nivelParentesis);
                     }
                     
                     eat(TokenType.RPAREN);
+                    // NO hacer break aquí - continuar procesando
                 } 
-                // Si no hay paréntesis internos y el límite es RPAREN, salir
                 else if (limitesSet.contains(TokenType.RPAREN)) {
+                    System.out.println("  • RPAREN está en los límites, deteniendo CALCULO");
                     break;
                 }
-                // Paréntesis inesperado
                 else {
-                    System.err.println("Error: Paréntesis de cierre inesperado en línea " + lineaActual);
-                    this.ParserError = true;
+                    // Nivel == 0 y RPAREN no es límite
+                    // Esto es un RPAREN externo del IF/FOR/etc
+                    System.out.println("  • ⚠ RPAREN externo detectado (nivel 0), saliendo de CALCULO");
                     break;
                 }
             }
-            // Coma: si es el límite, salir
+            
+            // Coma
             else if (this.Tok == TokenType.COMMA) {
-                if (limitesSet.contains(TokenType.COMMA)) 
+                if (limitesSet.contains(TokenType.COMMA)) {
+                    System.out.println("→ COMMA es límite, deteniendo CALCULO");
                     break;
+                }
                 
+                System.err.println("→ ⚠ ERROR: COMMA inesperada");
                 this.ParserError = true;
                 break;
             }
             else {
+                System.out.println("→ Token no procesable: " + this.Tok);
+                System.out.println("  • Finalizando CALCULO");
                 break;
             }
         }
 
-        // Verificar paréntesis balanceados
-        if (nivelParentesis > 0) {
-            System.err.println("Error: Paréntesis sin cerrar en línea " + lineaActual);
-            this.ParserError = true;
-            return null;
-        }
+        System.out.println("\n========================================");
+        System.out.println("     PROCESAMIENTO FINAL");
+        System.out.println("========================================");
+        System.out.println("Operadores restantes en pila: " + operadores.size());
+        System.out.println("Operandos en pila: " + operandos.size());
 
         // Procesar operadores restantes
+        if (!operadores.isEmpty()) {
+            System.out.println("\nVaciando pila de operadores...");
+        }
+        
         while (!operadores.isEmpty()) {
             if (operadores.peek().getTipo().equals("LPAREN")) {
                 this.ParserError = true;
-                System.err.println("Error: Paréntesis sin cerrar en expresión en línea " + lineaActual);
+                System.err.println("⚠ ERROR: Paréntesis sin cerrar en línea " + lineaActual);
+                break;
             }
+            System.out.println("  ├─ Construyendo subárbol final con: " + operadores.peek().getTipo());
             construirSubArbol();
         }
 
         if (!operandos.isEmpty()) {
-            System.out.println("AGREGANDO HIJO SOLO");
+            System.out.println("\n✓ Agregando resultado final al nodo CALCULO");
             nodoCalculo.agregarHijo(operandos.pop());
         }
         
-        System.out.println("    Arbol de cálculo");
-        System.out.println("    " + nodoCalculo.imprimirArbol() + "\n");
+        System.out.println("\n========================================");
+        System.out.println("        ÁRBOL DE CÁLCULO GENERADO");
+        System.out.println("========================================");
+        System.out.println(nodoCalculo.imprimirArbol());
+        System.out.println("========================================\n");
+
         return nodoCalculo;
     }
+    // Método auxiliar para obtener precedencia de un nodo
+    private int getPrecedenciaDeNodo(NodoParseTree nodo) {
+        try {
+            TokenType tipo = TokenType.valueOf(nodo.getTipo());
+            return tipo.getPrecedencia();
+        } catch (IllegalArgumentException e) {
+            return -1;
+        }
+    }
+
 
     // Sobrecarga para mantener compatibilidad
     private NodoParseTree CALCULO() {
         return CALCULO(TokenType.SEMICOLON);
     }
-
     private void construirSubArbol() {
 
-        System.out.println("\n    CONSTRUYENDO SUBÁRBOL ...");
+        System.out.println("\n    ┌─────────────────────────────────┐");
+        System.out.println("    │   CONSTRUYENDO SUBÁRBOL         │");
+        System.out.println("    └─────────────────────────────────┘");
+        
         if (operadores.isEmpty()) {
-            System.err.println("Error: Falta operador en línea " + lineaActual);
+            System.err.println("    ⚠ ERROR: Falta operador en línea " + lineaActual);
             this.ParserError = true;
             return;
         }
         
         if (operandos.size() < 2) {
-            System.err.println("Error: Faltan operandos para el operador en línea " + lineaActual);
+            System.err.println("    ⚠ ERROR: Faltan operandos para el operador en línea " + lineaActual);
             this.ParserError = true;
             return;
         }
@@ -365,9 +523,18 @@ public class Parser {
         NodoParseTree derecho = operandos.pop();
         NodoParseTree izquierdo = operandos.pop();
         
+        System.out.println("    Operador: " + operador.getTipo());
+        System.out.println("    Operando izquierdo: " + izquierdo.getTipo() + 
+                        (izquierdo.getLexema() != null ? " [" + izquierdo.getLexema() + "]" : ""));
+        System.out.println("    Operando derecho: " + derecho.getTipo() + 
+                        (derecho.getLexema() != null ? " [" + derecho.getLexema() + "]" : ""));
+        
         // El operador es la raíz, con los operandos como hijos
         operador.agregarHijo(izquierdo);
         operador.agregarHijo(derecho);
+        
+        System.out.println("    ✓ Subárbol creado: " + operador.getTipo() + 
+                        "(" + izquierdo.getTipo() + ", " + derecho.getTipo() + ")");
         
         // Empujar el subárbol completo de vuelta a operandos
         operandos.push(operador);
@@ -385,6 +552,8 @@ public class Parser {
     // llamada a funciones
     private NodoParseTree CALL() {  
         NodoParseTree nodoLlamada = new NodoParseTree("LLAMADA");
+
+        System.out.println("\n--------- CALL ---------");
         
         nodoLlamada.agregarHijo(eat(TokenType.IDENTIFIER));
         nodoLlamada.agregarHijo(eat(TokenType.LPAREN));
@@ -394,7 +563,7 @@ public class Parser {
             NodoParseTree argumentos = new NodoParseTree("ARGUMENTOS");
             
             // Primer argumento
-            argumentos.agregarHijo(CALCULO(TokenType.COMMA));
+            argumentos.agregarHijo(CALCULO(TokenType.COMMA, TokenType.RPAREN));
             
             // Argumentos adicionales
             while (this.Tok == TokenType.COMMA) {
@@ -406,6 +575,9 @@ public class Parser {
         }
         
         nodoLlamada.agregarHijo(eat(TokenType.RPAREN));
+
+        System.out.println("\n>>> Arbol de CALL generado:");
+        System.out.println(nodoLlamada.imprimirArbol() + "\n");
         
         return nodoLlamada;
     }
@@ -524,43 +696,6 @@ public class Parser {
         return params;
     }
 
-    private NodoParseTree COMPARACION(TokenType... limites) {
-
-        System.out.println("\n---------- COMPARACION ----------");
-
-        Set<TokenType> limitesSet = limites.length > 0 ? 
-            Set.of(limites) : 
-            Set.of(TokenType.SEMICOLON, TokenType.RPAREN);
-        
-        // Primer operando
-        NodoParseTree izquierdo = CALCULO(TokenType.EQ, TokenType.NE, 
-                                        TokenType.LT, TokenType.GT,
-                                        TokenType.LE, TokenType.GE);
-        
-        // Procesar operadores de comparación
-        while ((esOperadorComparacion(this.Tok) || esOperadorLogico(this.Tok)) && 
-            !limitesSet.contains(this.Tok) && 
-            !this.ParserError) {
-            
-            NodoParseTree operador = eat(this.Tok);
-            NodoParseTree derecho = CALCULO(TokenType.EQ, TokenType.NE, 
-                                            TokenType.LT, TokenType.GT,
-                                            TokenType.LE, TokenType.GE,
-                                            TokenType.AND, TokenType.OR);
-            
-            // Construir subárbol
-            operador.agregarHijo(izquierdo);
-            operador.agregarHijo(derecho);
-              
-            System.out.println("    Arbol de comparacion");
-            System.out.println(operador.imprimirArbol() + "\n");
-            
-            izquierdo = operador; // El resultado se convierte en el nuevo operando izquierdo
-        }
-        
-      
-        return izquierdo;
-    }
 
     // Métodos auxiliares
     private boolean esOperadorComparacion(TokenType tok) {
@@ -633,6 +768,10 @@ public class Parser {
             tokens.get(iterator+1).getTokenType() == TokenType.LPAREN;
     }
     
+    private boolean esOperador(TokenType tok) {
+    return esOperadorBinario(tok) || esOperadorComparacion(tok) || esOperadorLogico(tok);
+    }
+
     private boolean esElementoArray(TokenType t) {
         return
             t == TokenType.IDENTIFIER &&
@@ -658,26 +797,10 @@ public class Parser {
             Avanzar();
             return nodo;
         } else {
-            System.err.println("\n========== ERROR DE SINTAXIS ==========");
-            System.err.println("Línea " + lineaActual);
-            System.err.println("Se esperaba: " + tok.name());
-            System.err.println("Se obtuvo: " + this.Tok.name());
-            
-            // Mostrar contexto
-            if (iterator < tokens.size()) {
-                System.err.println("Lexema actual: " + tokens.get(iterator).getLexema());
-            }
-            System.err.println("=======================================\n");
-            
             this.ParserError = true;
             
             // Mostrar el árbol sintáctico parcial
-            if (this.arbolSintactico != null) {
-                System.out.println("\n========== ÁRBOL SINTÁCTICO PARCIAL ==========");
-                imprimirArbol(this.arbolSintactico, "", true);
-            }
             
-            System.exit(1);
             return null;
         }
     }

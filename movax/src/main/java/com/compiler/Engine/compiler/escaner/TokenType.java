@@ -9,24 +9,31 @@ public enum TokenType {
     UNION, UNSIGNED, VOID, VOLATILE, WHILE, PACKED, INCLUDE,
 
     // OPERADORES 
-    ASSIGN(1),
+    ASSIGN(12), PLUS_ASSIGN(12), MINUS_ASSIGN(12), MUL_ASSIGN(12), DIV_ASSIGN(12), MOD_ASSIGN(12),
     PLUS(2), MINUS(2),
     MUL(3), DIV(3), MOD(3),
     SHL(4), SHR(4),
+
 
     // PARÉNTESIS 
     LPAREN, RPAREN,
 
     // RELACIONALES
-    LT, GT, LE, GE, EQ, NE,
-
-    // BIT A BIT / LÓGICOS
-    AND, OR, XOR, LAND, LOR,
-
+    
+    // OPERADORES RELACIONALES
+    LT(3), GT(3), LE(3), GE(3),
+    EQ(2), NE(2),
+    
+    // OPERADORES BIT A BIT
+    AND(7), XOR(8), OR(9),
+    
+    // OPERADORES LÓGICOS (menor precedencia)
+    LAND(10), LOR(11),
+    
     // OTROS
-    COMMA, NOT, INC, DEC,
-    MINUS_ASSIGN, PLUS_ASSIGN, MUL_ASSIGN,
-    DIV_ASSIGN, MOD_ASSIGN, LIB_ID,
+    COMMA, NOT, INC, DEC, 
+    
+    LIB_ID,
 
     // PUNTUACIÓN
     LBRACE, RBRACE, LBRACKET, RBRACKET,
